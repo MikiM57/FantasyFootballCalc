@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fantasy Edge AI</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>Fantasy Edge AI</h1>
+        <p>Dynasty, redraft, and trade value lab.</p>
+      </div>
+      <button id="refreshButton" type="button">Refresh Rankings</button>
+    </header>
+
+    <main class="layout">
+      <section class="panel controls" aria-label="League controls">
+        <h2>League</h2>
+        <label>
+          Scoring
+          <select id="scoring">
+            <option value="half_ppr">Half PPR</option>
+            <option value="ppr">PPR</option>
+            <option value="standard">Standard</option>
+          </select>
+        </label>
+        <label class="checkline">
+          <input id="dynasty" type="checkbox" checked />
+          Dynasty
+        </label>
+        <label class="checkline">
+          <input id="superflex" type="checkbox" />
+          Superflex
+        </label>
+        <label>
+          TE premium
+          <input id="tePremium" type="number" min="0" max="2" step="0.25" value="0" />
+        </label>
+        <label>
+          Team direction
+          <select id="window">
+            <option value="balanced">Balanced</option>
+            <option value="contender">Contender</option>
+            <option value="rebuilder">Rebuilder</option>
+          </select>
+        </label>
+        <div class="needs">
+          <span>Needs</span>
+          <label>QB <input data-need="QB" type="range" min="-1" max="1" step="0.25" value="0" /></label>
+          <label>RB <input data-need="RB" type="range" min="-1" max="1" step="0.25" value="0" /></label>
+          <label>WR <input data-need="WR" type="range" min="-1" max="1" step="0.25" value="0" /></label>
+          <label>TE <input data-need="TE" type="range" min="-1" max="1" step="0.25" value="0" /></label>
+        </div>
+      </section>
+
+      <section class="rankings" aria-label="Player rankings">
+        <div class="section-title">
+          <h2>Rankings</h2>
+          <span id="status">Loading</span>
+        </div>
+        <div id="rankings"></div>
+      </section>
+
+      <section class="panel trade" aria-label="Trade analyzer">
+        <h2>Trade Analyzer</h2>
+        <label>
+          Give
+          <select id="giveSelect" multiple size="5"></select>
+        </label>
+        <label>
+          Receive
+          <select id="receiveSelect" multiple size="5"></select>
+        </label>
+        <button id="tradeButton" type="button">Analyze Trade</button>
+        <div id="tradeResult" class="trade-result"></div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

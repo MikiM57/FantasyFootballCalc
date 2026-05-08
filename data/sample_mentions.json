@@ -1,0 +1,74 @@
+[
+  {
+    "player_id": "jamarr-chase",
+    "player_name": "Ja'Marr Chase",
+    "source": "Sample Expert Consensus",
+    "url": null,
+    "published_on": "2026-05-08",
+    "sentiment": 0.82,
+    "magnitude": 0.85,
+    "confidence": 0.9,
+    "context": "draft",
+    "reason": "Elite target share, stable quarterback environment, and weekly ceiling."
+  },
+  {
+    "player_id": "bijan-robinson",
+    "player_name": "Bijan Robinson",
+    "source": "Sample Expert Consensus",
+    "url": null,
+    "published_on": "2026-05-08",
+    "sentiment": 0.76,
+    "magnitude": 0.82,
+    "confidence": 0.86,
+    "context": "dynasty",
+    "reason": "Workhorse profile with receiving upside and prime-age dynasty value."
+  },
+  {
+    "player_id": "josh-allen",
+    "player_name": "Josh Allen",
+    "source": "Sample Expert Consensus",
+    "url": null,
+    "published_on": "2026-05-08",
+    "sentiment": 0.72,
+    "magnitude": 0.78,
+    "confidence": 0.88,
+    "context": "superflex",
+    "reason": "Elite fantasy floor and rushing touchdown leverage."
+  },
+  {
+    "player_id": "sam-laporta",
+    "player_name": "Sam LaPorta",
+    "source": "Sample Expert Consensus",
+    "url": null,
+    "published_on": "2026-05-08",
+    "sentiment": 0.58,
+    "magnitude": 0.7,
+    "confidence": 0.82,
+    "context": "dynasty",
+    "reason": "Premium tight end role in a strong scoring environment."
+  },
+  {
+    "player_id": "derrick-henry",
+    "player_name": "Derrick Henry",
+    "source": "Sample Expert Consensus",
+    "url": null,
+    "published_on": "2026-05-08",
+    "sentiment": -0.18,
+    "magnitude": 0.62,
+    "confidence": 0.8,
+    "context": "dynasty",
+    "reason": "Still productive, but age and dynasty liquidity create downside."
+  },
+  {
+    "player_id": "drake-london",
+    "player_name": "Drake London",
+    "source": "Sample Expert Consensus",
+    "url": null,
+    "published_on": "2026-05-08",
+    "sentiment": 0.64,
+    "magnitude": 0.72,
+    "confidence": 0.82,
+    "context": "dynasty",
+    "reason": "Ascending target earner with youth and improved offensive context."
+  }
+]
