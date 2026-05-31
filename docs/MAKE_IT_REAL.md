@@ -41,6 +41,19 @@ Deploy the repo to Render, Railway, Fly.io, Azure, AWS, or another host that can
 
 After deployment, the host gives you a public URL. That is the real website link.
 
+## Adding Real Data
+
+For a quick prototype on Render, use secret files:
+
+```text
+PLAYERS_FILE=/etc/secrets/players.json
+MENTIONS_FILE=/etc/secrets/mentions.json
+```
+
+The files must match the sample JSON structure in `data/sample_players.json` and `data/sample_mentions.json`.
+
+For production, do not maintain all stats by hand in Render secret files. Use a database plus scheduled ingestion from approved APIs or public/licensed feeds.
+
 ## How To Make It More Like FantasyCalc
 
 The next product milestones are:

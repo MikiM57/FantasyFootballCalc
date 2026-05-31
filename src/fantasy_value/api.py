@@ -38,9 +38,14 @@ ROOT = _find_project_root()
 DATA_DIR = ROOT / "data"
 WEB_DIR = ROOT / "web"
 RUNTIME_DIR = DATA_DIR / "runtime"
-RUNTIME_MENTIONS_PATH = RUNTIME_DIR / "latest_mentions.json"
-SAMPLE_PLAYERS_PATH = DATA_DIR / "sample_players.json"
-SAMPLE_MENTIONS_PATH = DATA_DIR / "sample_mentions.json"
+DEFAULT_RUNTIME_MENTIONS_PATH = RUNTIME_DIR / "latest_mentions.json"
+DEFAULT_PLAYERS_PATH = DATA_DIR / "sample_players.json"
+DEFAULT_MENTIONS_PATH = DATA_DIR / "sample_mentions.json"
+PLAYERS_PATH = Path(os.environ.get("PLAYERS_FILE", DEFAULT_PLAYERS_PATH)).resolve()
+MENTIONS_PATH = Path(os.environ.get("MENTIONS_FILE", DEFAULT_MENTIONS_PATH)).resolve()
+RUNTIME_MENTIONS_PATH = Path(
+    os.environ.get("RUNTIME_MENTIONS_FILE", DEFAULT_RUNTIME_MENTIONS_PATH)
+).resolve()
 
 app = FastAPI(title="FantasyFootballCalc", version="0.1.0")
 app.add_middleware(
@@ -52,7 +57,7 @@ app.add_middleware(
 
 _source_config = source_config_from_env(dict(os.environ))
 _agent_pipeline = InternetAgentPipeline(
-    players_path=SAMPLE_PLAYERS_PATH,
+    players_path=PLAYERS_PATH,
     mentions_output_path=RUNTIME_MENTIONS_PATH,
     source_config=_source_config,
 )
@@ -94,8 +99,8 @@ def _roster(payload: LeaguePayload) -> RosterContext:
 
 
 def _current_data():
-    mentions_path = RUNTIME_MENTIONS_PATH if RUNTIME_MENTIONS_PATH.exists() else SAMPLE_MENTIONS_PATH
-    return load_players(SAMPLE_PLAYERS_PATH), load_mentions(mentions_path)
+    mentions_path = RUNTIME_MENTIONS_PATH if RUNTIME_MENTIONS_PATH.exists() else MENTIONS_PATH
+    return load_players(PLAYERS_PATH), load_mentions(mentions_path)
 
 
 @app.on_event("startup")
@@ -170,6 +175,12 @@ def health():
         "root": str(ROOT),
         "web_dir_exists": WEB_DIR.exists(),
         "data_dir_exists": DATA_DIR.exists(),
+        "players_file": str(PLAYERS_PATH),
+        "players_file_exists": PLAYERS_PATH.exists(),
+        "mentions_file": str(MENTIONS_PATH),
+        "mentions_file_exists": MENTIONS_PATH.exists(),
+        "runtime_mentions_file": str(RUNTIME_MENTIONS_PATH),
+        "runtime_mentions_file_exists": RUNTIME_MENTIONS_PATH.exists(),
     }
 
 

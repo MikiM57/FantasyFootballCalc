@@ -8,6 +8,12 @@ services:
     envVars:
       - key: STATS_PROVIDER
         value: sample
+      - key: PLAYERS_FILE
+        value: data/sample_players.json
+      - key: MENTIONS_FILE
+        value: data/sample_mentions.json
+      - key: RUNTIME_MENTIONS_FILE
+        value: data/runtime/latest_mentions.json
       - key: ENABLE_DAILY_AGENTS
         value: true
       - key: RUN_AGENTS_ON_START

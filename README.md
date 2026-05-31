@@ -46,6 +46,34 @@ The agents run once per day by default. They read configured RSS feeds or articl
 
 Use only approved feeds, public APIs, licensed data, RSS metadata, or sources you are allowed to access. The app is built to support internet ingestion, but it should not blindly scrape sites that prohibit automated access.
 
+## Adding Real Data On Render
+
+Render's **Environment** page lets you add both environment variables and secret files. Secret files are available at runtime under `/etc/secrets/<filename>`.
+
+For real player data:
+
+1. Create a JSON file named `players.json`.
+2. In Render, open your `fantasyfootballcalc` service.
+3. Go to **Environment**.
+4. Under **Secret Files**, click **Add Secret File**.
+5. Use filename `players.json`.
+6. Paste the JSON contents.
+7. Add or update this environment variable:
+
+```text
+PLAYERS_FILE=/etc/secrets/players.json
+```
+
+For hand-curated expert sentiment, add another secret file:
+
+```text
+MENTIONS_FILE=/etc/secrets/mentions.json
+```
+
+Then choose **Save, rebuild, and deploy**.
+
+The player file must be a JSON array using the same shape as `data/sample_players.json`. Secret files are best for small data files; for a full production player database, use a database or commit a public non-secret data file into `data/`.
+
 ## Quick Start
 
 ```powershell
