@@ -31,6 +31,30 @@ const elements = {
 
 let tradeTimer = null;
 
+const metricTooltips = {
+  Value:
+    "0-100 player value score combining production, opportunity, efficiency, team context, age, market, schedule, expert favorability, and risk.",
+  Avg: "Average fantasy points per game from available weekly production.",
+  ROS: "Rest-of-season projected fantasy points based on average points and remaining games.",
+  Sched:
+    "0-100 rest-of-season matchup score. Around 50 is neutral, 65+ is favorable, below 40 is difficult.",
+  Expert:
+    "0-100 favorability from configured fantasy article and RSS sources. Around 50 is neutral, 65+ is positive, below 40 is cautious.",
+  Package:
+    "Total trade-side value after depth, consolidation, format, and roster-context adjustments.",
+  "Avg PPG": "Average fantasy points per game for players in this package.",
+  "ROS Pts": "Combined rest-of-season projected fantasy points for this package.",
+  Schedule:
+    "Average 0-100 rest-of-season schedule score for players in this package. Higher means easier matchups.",
+  Risk:
+    "0-100 injury and role uncertainty penalty. Lower is safer; higher means more downside.",
+  Feeds: "Number of RSS feeds configured for expert sentiment ingestion.",
+  URLs: "Number of direct article URLs configured for expert sentiment ingestion.",
+  Stats: "Online player-stat ingestion status from the background agent.",
+  Sources: "Whether expert article/RSS sources are configured or the app is using sample sentiment.",
+  Last: "Most recent background agent run status.",
+};
+
 function leaguePayload() {
   const positional_needs = {};
   document.querySelectorAll("[data-need]").forEach((input) => {
@@ -125,9 +149,9 @@ function positionHeader(position, count) {
 }
 
 function playerRow(player, index) {
-    const row = document.createElement("article");
-    row.className = "player-row";
-    row.innerHTML = `
+  const row = document.createElement("article");
+  row.className = "player-row";
+  row.innerHTML = `
       <div class="rank">${index + 1}</div>
       <div class="player-main">
         <div class="player-name">
@@ -144,7 +168,7 @@ function playerRow(player, index) {
       ${metric("Sched", player.strength_of_schedule)}
       ${metric("Expert", player.expert_favorability)}
     `;
-    return row;
+  return row;
 }
 
 function barWidth(value) {
@@ -218,7 +242,21 @@ function renderSummary(summary) {
 
 function metric(label, value) {
   const display = typeof value === "number" ? value.toFixed(value >= 100 ? 0 : 1) : value;
-  return `<div class="metric"><span>${label}</span><strong>${display}</strong></div>`;
+  const tooltip = metricTooltips[label] || "FantasyFootballCalc metric.";
+  return `
+    <div class="metric has-tooltip" tabindex="0" data-tooltip="${escapeAttr(tooltip)}">
+      <span>${label}</span>
+      <strong>${display}</strong>
+    </div>
+  `;
+}
+
+function escapeAttr(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }
 
 async function loadAgentStatus() {

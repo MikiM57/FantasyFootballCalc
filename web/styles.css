@@ -285,6 +285,7 @@ input[type="range"] {
 
 .scoreline div,
 .metric {
+  position: relative;
   min-height: 58px;
   display: grid;
   gap: 4px;
@@ -302,6 +303,69 @@ input[type="range"] {
 .scoreline strong,
 .metric strong {
   font-size: 1.18rem;
+}
+
+.has-tooltip {
+  position: relative;
+}
+
+.has-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  z-index: 20;
+  width: min(280px, 80vw);
+  padding: 10px 12px;
+  border: 1px solid #22323d;
+  border-radius: 8px;
+  background: #14212a;
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-transform: none;
+  box-shadow: 0 12px 28px rgba(20, 33, 42, 0.24);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px);
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+
+.has-tooltip::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 3px);
+  left: 50%;
+  z-index: 21;
+  width: 10px;
+  height: 10px;
+  background: #14212a;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px) rotate(45deg);
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+
+.has-tooltip:hover::after,
+.has-tooltip:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.has-tooltip:hover::before,
+.has-tooltip:focus-visible::before {
+  opacity: 1;
+  transform: translate(-50%, 0) rotate(45deg);
+}
+
+.has-tooltip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .trade-notes {
