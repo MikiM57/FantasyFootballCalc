@@ -14,6 +14,7 @@ except ImportError as exc:  # pragma: no cover - exercised only without API extr
         "Install API dependencies with: pip install -e \".[api]\""
     ) from exc
 
+from fantasy_value.calibration import load_calibration
 from fantasy_value.models import LeagueSettings, RosterContext
 from fantasy_value.agents.article_sources import source_config_from_env
 from fantasy_value.agents.online_stats_agent import OnlineNflStatsAgent, config_from_env
@@ -41,6 +42,7 @@ WEB_DIR = ROOT / "web"
 RUNTIME_DIR = DATA_DIR / "runtime"
 DEFAULT_RUNTIME_MENTIONS_PATH = RUNTIME_DIR / "latest_mentions.json"
 DEFAULT_RUNTIME_PLAYERS_PATH = RUNTIME_DIR / "latest_players.json"
+DEFAULT_RUNTIME_CALIBRATION_PATH = RUNTIME_DIR / "calibration.json"
 DEFAULT_PLAYERS_PATH = DATA_DIR / "sample_players.json"
 DEFAULT_MENTIONS_PATH = DATA_DIR / "sample_mentions.json"
 SECRET_PLAYERS_PATH = Path("/etc/secrets/players.json")
@@ -61,6 +63,9 @@ RUNTIME_MENTIONS_PATH = Path(
     os.environ.get("RUNTIME_MENTIONS_FILE", DEFAULT_RUNTIME_MENTIONS_PATH)
 ).resolve()
 RUNTIME_PLAYERS_PATH = Path(os.environ.get("RUNTIME_PLAYERS_FILE", DEFAULT_RUNTIME_PLAYERS_PATH)).resolve()
+RUNTIME_CALIBRATION_PATH = Path(
+    os.environ.get("RUNTIME_CALIBRATION_FILE", DEFAULT_RUNTIME_CALIBRATION_PATH)
+).resolve()
 ONLINE_STATS_ENABLED = os.environ.get("ENABLE_ONLINE_STATS", "").lower() == "true"
 
 app = FastAPI(title="FantasyFootballCalc", version="0.1.0")
@@ -76,6 +81,7 @@ _online_stats_agent = (
     OnlineNflStatsAgent(
         output_path=RUNTIME_PLAYERS_PATH,
         config=config_from_env(dict(os.environ)),
+        calibration_output_path=RUNTIME_CALIBRATION_PATH,
     )
     if ONLINE_STATS_ENABLED
     else None
@@ -132,6 +138,10 @@ def _current_data():
     return load_players(players_path), load_mentions(mentions_path)
 
 
+def _valuation_engine() -> ValuationEngine:
+    return ValuationEngine(calibration=load_calibration(RUNTIME_CALIBRATION_PATH))
+
+
 @app.on_event("startup")
 def start_daily_agents() -> None:
     if os.environ.get("ENABLE_DAILY_AGENTS", "").lower() == "true":
@@ -152,7 +162,7 @@ def players():
 @app.post("/api/rankings")
 def rankings(payload: LeaguePayload):
     sample_players, mentions = _current_data()
-    values = ValuationEngine().rank_players(
+    values = _valuation_engine().rank_players(
         sample_players,
         mentions,
         _settings(payload),
@@ -166,7 +176,7 @@ def trade(payload: TradePayload):
     if len(payload.give) > 5 or len(payload.receive) > 5:
         raise HTTPException(status_code=400, detail="Trades support up to 5 players on each side.")
     sample_players, mentions = _current_data()
-    result = TradeAnalyzer().analyze(
+    result = TradeAnalyzer(engine=_valuation_engine()).analyze(
         sample_players,
         mentions,
         TradeSide("give", tuple(payload.give)),
@@ -210,6 +220,8 @@ def health():
         "configured_players_file_exists": CONFIGURED_PLAYERS_PATH.exists(),
         "runtime_players_file": str(RUNTIME_PLAYERS_PATH),
         "runtime_players_file_exists": RUNTIME_PLAYERS_PATH.exists(),
+        "runtime_calibration_file": str(RUNTIME_CALIBRATION_PATH),
+        "runtime_calibration_file_exists": RUNTIME_CALIBRATION_PATH.exists(),
         "mentions_file": str(MENTIONS_PATH),
         "mentions_file_exists": MENTIONS_PATH.exists(),
         "runtime_mentions_file": str(RUNTIME_MENTIONS_PATH),

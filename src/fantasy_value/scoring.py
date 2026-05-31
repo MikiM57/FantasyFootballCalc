@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from statistics import mean
 
+from fantasy_value.calibration import Calibration, DEFAULT_CALIBRATION
 from fantasy_value.models import ExpertMention, LeagueSettings, PlayerStats, Position, RosterContext
 
 
@@ -86,6 +87,7 @@ class ValuationEngine:
             + age * weights["age"]
             - risk * weights["risk"]
         )
+        standalone += self._starter_bonus(player, self.calibration)
         standalone *= scarcity
 
         roster_adjusted = standalone + self._context_adjustment(player, roster, league)
@@ -137,8 +139,9 @@ class ValuationEngine:
         return max(low, min(high, value))
 
     def _production_score(self, player: PlayerStats) -> float:
-        baseline = {"QB": 14.0, "RB": 7.5, "WR": 8.0, "TE": 5.5}.get(player.position, 7.0)
-        elite = {"QB": 24.0, "RB": 20.0, "WR": 21.0, "TE": 16.0}.get(player.position, 18.0)
+        calibration = self._position_calibration(player.position)
+        baseline = calibration.replacement_ppg
+        elite = calibration.elite_ppg
         ppg_score = (player.fantasy_points_per_game - baseline) / max(1.0, elite - baseline) * 100
         projected_baseline = baseline * max(1, player.remaining_games)
         projected_elite = elite * max(1, player.remaining_games)
@@ -241,11 +244,20 @@ class ValuationEngine:
         return weights
 
     @staticmethod
-    def _scarcity_multiplier(player: PlayerStats, league: LeagueSettings) -> float:
+    def _starter_bonus(player: PlayerStats, calibration: Calibration) -> float:
+        position_calibration = calibration.positions.get(player.position)
+        if not position_calibration:
+            return 0.0
+        edge = player.fantasy_points_per_game - position_calibration.starter_ppg
+        return max(-6.0, min(8.0, edge * 0.9))
+
+    def _scarcity_multiplier(self, player: PlayerStats, league: LeagueSettings) -> float:
+        calibration = self._position_calibration(player.position)
         if player.position == "QB":
             if league.superflex:
-                return 1.22
-            return 0.76 if league.dynasty else 0.82
+                return calibration.superflex_multiplier
+            redraft_lift = 0.06 if not league.dynasty else 0.0
+            return min(0.9, calibration.one_qb_multiplier + redraft_lift)
         if player.position == "TE":
             premium_boost = min(0.16, league.tight_end_premium * 0.12)
             starter_boost = 0.04 if league.starters.get("TE", 1) > 1 else 0.0
@@ -253,6 +265,13 @@ class ValuationEngine:
         if player.position == "WR" and league.starters.get("WR", 2) >= 3:
             return 1.05
         return 1.0
+
+    def _position_calibration(self, position: Position):
+        return (
+            self.calibration.positions.get(position)
+            or DEFAULT_CALIBRATION.positions.get(position)
+            or DEFAULT_CALIBRATION.positions["WR"]
+        )
 
     @staticmethod
     def _context_adjustment(
@@ -318,3 +337,5 @@ def average_value(values: list[PlayerValuation]) -> float:
     if not values:
         return 0.0
     return round(mean(item.value for item in values), 2)
+    def __init__(self, calibration: Calibration | None = None) -> None:
+        self.calibration = calibration or DEFAULT_CALIBRATION

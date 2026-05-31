@@ -10,6 +10,7 @@ from statistics import mean
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from fantasy_value.calibration import Calibration, PositionCalibration, save_calibration
 from fantasy_value.models import PlayerStats, Position
 from fantasy_value.repository import save_players
 
@@ -33,6 +34,7 @@ class OnlineStatsConfig:
     nflverse_stats_template: str = NFLVERSE_STATS_TEMPLATE
     nflverse_schedules_url: str = NFLVERSE_SCHEDULES_URL
     include_schedule: bool = True
+    calibration_seasons: int = 5
 
 
 @dataclass(frozen=True)
@@ -40,6 +42,8 @@ class OnlineStatsRunSummary:
     status: str
     season_used: int | None
     players_written: int
+    calibration_seasons: list[int]
+    calibration_output_path: str | None
     output_path: str | None
     message: str
 
@@ -48,6 +52,7 @@ class OnlineStatsRunSummary:
 class OnlineNflStatsAgent:
     output_path: Path
     config: OnlineStatsConfig
+    calibration_output_path: Path | None = None
 
     def run(self) -> OnlineStatsRunSummary:
         try:
@@ -62,10 +67,17 @@ class OnlineNflStatsAgent:
                 limit=self.config.limit,
             )
             save_players(self.output_path, players)
+            calibration = build_historical_calibration(self.config, current_season=season)
+            if self.calibration_output_path:
+                save_calibration(self.calibration_output_path, calibration)
             return OnlineStatsRunSummary(
                 status="complete",
                 season_used=season,
                 players_written=len(players),
+                calibration_seasons=calibration.seasons,
+                calibration_output_path=(
+                    str(self.calibration_output_path) if self.calibration_output_path else None
+                ),
                 output_path=str(self.output_path),
                 message="Online NFL player data refreshed.",
             )
@@ -74,6 +86,8 @@ class OnlineNflStatsAgent:
                 status="failed",
                 season_used=None,
                 players_written=0,
+                calibration_seasons=[],
+                calibration_output_path=None,
                 output_path=None,
                 message=f"Online stats refresh failed: {exc}",
             )
@@ -83,6 +97,7 @@ def config_from_env(env: dict[str, str]) -> OnlineStatsConfig:
     raw_season = env.get("NFLVERSE_SEASON", "").strip()
     raw_limit = env.get("ONLINE_PLAYER_LIMIT", "").strip()
     raw_fallback = env.get("NFLVERSE_FALLBACK_SEASONS", "").strip()
+    raw_calibration_seasons = env.get("HISTORICAL_CALIBRATION_SEASONS", "").strip()
     return OnlineStatsConfig(
         season=int(raw_season) if raw_season else None,
         fallback_seasons=int(raw_fallback) if raw_fallback else 2,
@@ -91,6 +106,7 @@ def config_from_env(env: dict[str, str]) -> OnlineStatsConfig:
         nflverse_stats_template=env.get("NFLVERSE_STATS_TEMPLATE", NFLVERSE_STATS_TEMPLATE),
         nflverse_schedules_url=env.get("NFLVERSE_SCHEDULES_URL", NFLVERSE_SCHEDULES_URL),
         include_schedule=env.get("ENABLE_SCHEDULE_STRENGTH", "true").lower() == "true",
+        calibration_seasons=int(raw_calibration_seasons) if raw_calibration_seasons else 5,
     )
 
 
@@ -114,6 +130,107 @@ def fetch_latest_weekly_stats(config: OnlineStatsConfig) -> tuple[int, list[dict
         except (HTTPError, URLError, TimeoutError, ValueError) as exc:
             last_error = exc
     raise RuntimeError(f"No nflverse player stats CSV could be loaded: {last_error}")
+
+
+def fetch_historical_weekly_stats(
+    config: OnlineStatsConfig,
+    current_season: int,
+) -> dict[int, list[dict[str, str]]]:
+    output: dict[int, list[dict[str, str]]] = {}
+    for season in range(current_season - 1, current_season - config.calibration_seasons - 1, -1):
+        url = config.nflverse_stats_template.format(season=season)
+        try:
+            output[season] = fetch_csv(url)
+        except (HTTPError, URLError, TimeoutError, ValueError):
+            continue
+    return output
+
+
+def build_historical_calibration(
+    config: OnlineStatsConfig,
+    current_season: int,
+) -> Calibration:
+    seasons = fetch_historical_weekly_stats(config, current_season)
+    return calibration_from_weekly_stats(seasons)
+
+
+def calibration_from_weekly_stats(seasons: dict[int, list[dict[str, str]]]) -> Calibration:
+    ppg_by_position: dict[Position, list[float]] = {"QB": [], "RB": [], "WR": [], "TE": []}
+    for rows in seasons.values():
+        grouped: dict[str, list[dict[str, str]]] = {}
+        for row in rows:
+            position = _position(row)
+            if position not in FANTASY_POSITIONS:
+                continue
+            player_id = row.get("player_id") or row.get("player_gsis_id") or _slug(row.get("player_name", ""))
+            grouped.setdefault(player_id, []).append(row)
+        for player_rows in grouped.values():
+            games = [_fantasy_points(row) for row in player_rows]
+            active_games = [points for points in games if points > 0]
+            if len(active_games) < 4:
+                continue
+            position = _position(player_rows[-1])
+            ppg_by_position[position].append(mean(active_games))
+
+    positions = {
+        position: _position_calibration_from_ppg(position, values)
+        for position, values in ppg_by_position.items()
+    }
+    seasons_used = sorted(season for season, rows in seasons.items() if rows)
+    return Calibration(seasons=seasons_used, positions=positions)
+
+
+def _position_calibration_from_ppg(
+    position: Position,
+    values: list[float],
+) -> PositionCalibration:
+    if not values:
+        fallback = {
+            "QB": (14.0, 18.0, 24.0, 15.5),
+            "RB": (7.5, 11.5, 20.0, 8.5),
+            "WR": (8.0, 12.0, 21.0, 8.8),
+            "TE": (5.5, 8.0, 16.0, 5.8),
+        }[position]
+        baseline, starter, elite, replacement = fallback
+    else:
+        ordered = sorted(values, reverse=True)
+        baseline = _percentile(ordered, 0.72)
+        starter = _rank_value(ordered, {"QB": 12, "RB": 24, "WR": 30, "TE": 12}[position])
+        elite = _rank_value(ordered, {"QB": 3, "RB": 6, "WR": 8, "TE": 3}[position])
+        replacement = _rank_value(ordered, {"QB": 18, "RB": 36, "WR": 42, "TE": 18}[position])
+    one_qb_multiplier = _one_qb_multiplier(position, elite, replacement)
+    superflex_multiplier = 1.0
+    if position == "QB":
+        superflex_multiplier = 1.16 + min(0.12, max(0.0, (elite - replacement) / 100))
+    return PositionCalibration(
+        baseline_ppg=round(baseline, 2),
+        starter_ppg=round(starter, 2),
+        elite_ppg=round(max(elite, starter + 1.0), 2),
+        replacement_ppg=round(replacement, 2),
+        one_qb_multiplier=round(one_qb_multiplier, 3),
+        superflex_multiplier=round(superflex_multiplier, 3),
+    )
+
+
+def _rank_value(values: list[float], rank: int) -> float:
+    if not values:
+        return 0.0
+    index = max(0, min(len(values) - 1, rank - 1))
+    return values[index]
+
+
+def _percentile(values: list[float], percentile: float) -> float:
+    if not values:
+        return 0.0
+    index = int(max(0, min(len(values) - 1, round((len(values) - 1) * percentile))))
+    return values[index]
+
+
+def _one_qb_multiplier(position: Position, elite: float, replacement: float) -> float:
+    if position != "QB":
+        return 1.05 if position == "WR" else 1.0
+    spread = max(1.0, elite - replacement)
+    return _clip(0.68 + spread / 40, 0.68, 0.86)
 
 
 def fetch_schedules(url: str) -> list[dict[str, str]]:
@@ -180,7 +297,6 @@ def _to_player_stats(
     target_games = max(1, games)
     targets_per_game = _sum(rows, "targets") / target_games
     carries_per_game = _sum(rows, "carries") / target_games
-    receptions_per_game = _sum(rows, "receptions") / target_games
     red_zone_touches = _sum(rows, "rushing_tds") + _sum(rows, "receiving_tds")
     projected_points = average_points * max(remaining_games, 17 if games else 0)
     schedule_score = _schedule_score(position, schedule_by_team.get(team, []), defense_allowed)

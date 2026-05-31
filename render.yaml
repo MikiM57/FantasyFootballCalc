@@ -14,10 +14,14 @@ services:
         value: "250"
       - key: NFLVERSE_FALLBACK_SEASONS
         value: "2"
+      - key: HISTORICAL_CALIBRATION_SEASONS
+        value: "5"
       - key: ENABLE_SCHEDULE_STRENGTH
         value: "true"
       - key: RUNTIME_PLAYERS_FILE
         value: data/runtime/latest_players.json
+      - key: RUNTIME_CALIBRATION_FILE
+        value: data/runtime/calibration.json
       - key: RUNTIME_MENTIONS_FILE
         value: data/runtime/latest_mentions.json
       - key: ENABLE_DAILY_AGENTS

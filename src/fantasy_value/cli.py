@@ -40,12 +40,15 @@ def main() -> None:
     agents_parser.add_argument("--fetch-bodies", action="store_true")
     agents_parser.add_argument("--online-stats", action="store_true")
     agents_parser.add_argument("--stats-output", default="data/runtime/latest_players.json")
+    agents_parser.add_argument("--calibration-output", default="data/runtime/calibration.json")
 
     stats_parser = subparsers.add_parser("online-stats", help="Fetch online NFL player stats once.")
     stats_parser.add_argument("--output", default="data/runtime/latest_players.json")
     stats_parser.add_argument("--season", type=int)
     stats_parser.add_argument("--limit", type=int, default=250)
     stats_parser.add_argument("--fallback-seasons", type=int, default=2)
+    stats_parser.add_argument("--calibration-output", default="data/runtime/calibration.json")
+    stats_parser.add_argument("--calibration-seasons", type=int, default=5)
     stats_parser.add_argument("--no-schedule", action="store_true")
 
     args = parser.parse_args()
@@ -100,6 +103,7 @@ def _agents(args: argparse.Namespace) -> None:
         OnlineNflStatsAgent(
             output_path=Path(args.stats_output),
             config=OnlineStatsConfig(),
+            calibration_output_path=Path(args.calibration_output),
         )
         if args.online_stats
         else None
@@ -125,8 +129,10 @@ def _online_stats(args: argparse.Namespace) -> None:
             season=args.season,
             fallback_seasons=args.fallback_seasons,
             limit=args.limit,
+            calibration_seasons=args.calibration_seasons,
             include_schedule=not args.no_schedule,
         ),
+        calibration_output_path=Path(args.calibration_output),
     ).run()
     print(json.dumps(asdict(result), indent=2))
 
