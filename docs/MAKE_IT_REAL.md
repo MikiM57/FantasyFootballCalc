@@ -1,0 +1,54 @@
+# Making FantasyFootballCalc Real
+
+## What You Have Now
+
+The current app is a working prototype:
+
+- Rankings page
+- League setting controls
+- Trade analyzer
+- Sample player data
+- Sample expert sentiment data
+- Scoring engine
+- GitHub Actions test run
+- Docker/Codespaces/Render deployment support
+
+GitHub Actions proves the code runs. It is the test machine, not the public website.
+
+## How To Use It Today
+
+Use Codespaces if your computer does not have Python installed:
+
+```bash
+uvicorn fantasy_value.api:app --host 0.0.0.0 --port 8000
+```
+
+Then open the forwarded `8000` port.
+
+Use Docker if you have Docker Desktop:
+
+```bash
+docker compose up --build
+```
+
+Then open `http://127.0.0.1:8000`.
+
+## How To Make It A Public Website
+
+Deploy the repo to Render, Railway, Fly.io, Azure, AWS, or another host that can run a Python web server. This repo includes `render.yaml`, so Render is the easiest starting point.
+
+After deployment, the host gives you a public URL. That is the real website link.
+
+## How To Make It More Like FantasyCalc
+
+The next product milestones are:
+
+1. Replace sample data with real provider data.
+2. Store daily value snapshots in a database.
+3. Add pages for player rankings, player profiles, trade calculator, and value history.
+4. Add league import from Sleeper first because it has a friendly public API.
+5. Add expert sentiment ingestion from allowed RSS feeds and licensed/public article sources.
+6. Add user accounts and saved leagues.
+7. Add market values from real trades if you have a lawful source for that data.
+
+Avoid scraping websites that prohibit it. Use public APIs, licensed providers, RSS metadata, and user-authorized league exports.

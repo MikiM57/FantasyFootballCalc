@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: fantasyfootballcalc
+    runtime: python
+    plan: free
+    buildCommand: python -m pip install --upgrade pip && python -m pip install ".[api]"
+    startCommand: uvicorn fantasy_value.api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: STATS_PROVIDER
+        value: sample
+      - key: PYTHON_VERSION
+        value: 3.11.9

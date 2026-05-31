@@ -1,6 +1,6 @@
-# Fantasy Edge AI
+# FantasyFootballCalc
 
-Fantasy Edge AI is a repo-ready starter for a fantasy football valuation platform. It combines statistical player signals, expert/article sentiment, league settings, and roster context to rank players and evaluate trades.
+FantasyFootballCalc is a repo-ready starter for a fantasy football valuation platform. It combines statistical player signals, expert/article sentiment, league settings, and roster context to rank players and evaluate trades.
 
 The goal is to improve on simple trade calculators by separating:
 
@@ -22,6 +22,12 @@ The goal is to improve on simple trade calculators by separating:
 - GitHub Actions CI that runs tests, CLI checks, and a live API/web smoke test
 - Docker and GitHub Codespaces support
 
+## What The GitHub Run Means
+
+When the GitHub Actions `CI` workflow is green, the app has been tested. It means GitHub successfully installed the project, ran the unit tests, ran the command-line rankings/trade checks, started the web server, called the API, and confirmed the web UI loads.
+
+That is not the same as hosting the site. GitHub Actions runs the program temporarily and then shuts it down. To actually use it in a browser, run it locally, open it in Codespaces, or deploy it to a hosting service.
+
 ## Quick Start
 
 ```powershell
@@ -33,6 +39,23 @@ uvicorn fantasy_value.api:app --reload
 ```
 
 Then open `http://127.0.0.1:8000`.
+
+## Use It In GitHub Codespaces
+
+This is the easiest way to test it without setting up Python on your computer:
+
+1. Open `https://github.com/MikiM57/FantasyFootballCalc`.
+2. Select **Code**.
+3. Select **Codespaces**.
+4. Create a codespace.
+5. Wait for dependencies to install.
+6. Run:
+
+```bash
+uvicorn fantasy_value.api:app --host 0.0.0.0 --port 8000
+```
+
+When Codespaces shows port `8000`, open it in the browser. You should see rankings, league controls, and the trade analyzer.
 
 ## Run From GitHub
 
@@ -57,6 +80,19 @@ For container runs:
 ```bash
 docker compose up --build
 ```
+
+## Deploy As A Public Website
+
+The app is ready to deploy as a small FastAPI website. A simple path is Render:
+
+1. Create a Render account.
+2. Select **New**.
+3. Select **Blueprint**.
+4. Connect `MikiM57/FantasyFootballCalc`.
+5. Render will read `render.yaml`.
+6. Deploy.
+
+After deployment, Render gives you a public URL. That URL is the actual website.
 
 If you only want to test the core engine without installing API dependencies:
 
@@ -89,6 +125,7 @@ python -m fantasy_value.cli rank --players data/sample_players.json --mentions d
 |-- web/
 |-- Dockerfile
 |-- docker-compose.yml
+|-- render.yaml
 `-- pyproject.toml
 ```
 

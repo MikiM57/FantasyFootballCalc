@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT / "data"
 WEB_DIR = ROOT / "web"
 
-app = FastAPI(title="Fantasy Edge AI", version="0.1.0")
+app = FastAPI(title="FantasyFootballCalc", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

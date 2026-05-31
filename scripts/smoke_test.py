@@ -56,7 +56,7 @@ def main() -> None:
     assert "net_for_a" in trade
 
     html = get_text(f"{base_url}/")
-    assert "Fantasy Edge AI" in html
+    assert "FantasyFootballCalc" in html
 
     print("Full program smoke test passed.")
 
