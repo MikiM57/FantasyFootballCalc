@@ -4,16 +4,14 @@ const state = {
   rankings: [],
   sleepers: [],
   lastTrade: null,
+  activeRankingMode: "overall",
   activePosition: "ALL",
-  activeSleeperPosition: "ALL",
 };
 
 const elements = {
   rankings: document.querySelector("#rankings"),
+  rankingModeTabs: document.querySelector("#rankingModeTabs"),
   positionTabs: document.querySelector("#positionTabs"),
-  sleepers: document.querySelector("#sleepers"),
-  sleeperTabs: document.querySelector("#sleeperTabs"),
-  sleeperCount: document.querySelector("#sleeperCount"),
   status: document.querySelector("#status"),
   rankingCount: document.querySelector("#rankingCount"),
   scoring: document.querySelector("#scoring"),
@@ -130,54 +128,53 @@ function createPlayerSelect(side, index) {
 async function loadRankings() {
   elements.status.textContent = "Refreshing";
   const payload = leaguePayload();
-  const [rankings, sleepers] = await Promise.all([
-    postJson("/api/rankings", payload),
-    postJson("/api/sleepers", payload),
-  ]);
-  state.rankings = rankings;
-  state.sleepers = sleepers;
+  try {
+    state.rankings = await postJson("/api/rankings", payload);
+    renderRankings();
+  } catch (error) {
+    state.rankings = [];
+    renderRankingError(`Could not load overall rankings: ${error.message}`);
+  }
+  try {
+    state.sleepers = await postJson("/api/sleepers", payload);
+  } catch (error) {
+    state.sleepers = [];
+    if (state.activeRankingMode === "sleepers") {
+      renderRankingError(`Could not load sleeper rankings: ${error.message}`);
+    }
+  }
   renderRankings();
-  renderSleepers();
   elements.status.textContent = "Ready";
 }
 
 function renderRankings() {
   elements.rankings.innerHTML = "";
+  const source = state.activeRankingMode === "sleepers" ? state.sleepers : state.rankings;
   const positions = state.activePosition === "ALL" ? ["QB", "RB", "WR", "TE"] : [state.activePosition];
   let shown = 0;
   positions.forEach((position) => {
-    const players = state.rankings.filter((player) => player.position === position);
+    const players = source.filter((player) => player.position === position);
     if (!players.length) {
       return;
     }
     elements.rankings.append(positionHeader(position, players.length));
     players.forEach((player, index) => {
-      elements.rankings.append(playerRow(player, index));
+      elements.rankings.append(
+        state.activeRankingMode === "sleepers" ? sleeperRow(player, index) : playerRow(player, index),
+      );
       shown += 1;
     });
   });
+  if (!shown) {
+    const label = state.activeRankingMode === "sleepers" ? "sleeper candidates" : "ranked players";
+    renderRankingError(`No ${label} available for this position yet.`);
+  }
   elements.rankingCount.textContent = `${shown} players`;
 }
 
-function renderSleepers() {
-  elements.sleepers.innerHTML = "";
-  const positions =
-    state.activeSleeperPosition === "ALL"
-      ? ["QB", "RB", "WR", "TE"]
-      : [state.activeSleeperPosition];
-  let shown = 0;
-  positions.forEach((position) => {
-    const players = state.sleepers.filter((player) => player.position === position);
-    if (!players.length) {
-      return;
-    }
-    elements.sleepers.append(positionHeader(position, players.length));
-    players.slice(0, 12).forEach((player, index) => {
-      elements.sleepers.append(sleeperRow(player, index));
-      shown += 1;
-    });
-  });
-  elements.sleeperCount.textContent = `${shown} players`;
+function renderRankingError(message) {
+  elements.rankings.innerHTML = `<div class="empty-state">${message}</div>`;
+  elements.rankingCount.textContent = "0 players";
 }
 
 function positionHeader(position, count) {
@@ -344,6 +341,17 @@ async function refreshAll() {
 }
 
 document.querySelector("#refreshButton").addEventListener("click", refreshAll);
+elements.rankingModeTabs.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-mode]");
+  if (!button) {
+    return;
+  }
+  state.activeRankingMode = button.dataset.mode;
+  elements.rankingModeTabs.querySelectorAll("button").forEach((item) => {
+    item.classList.toggle("active", item === button);
+  });
+  renderRankings();
+});
 elements.positionTabs.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-position]");
   if (!button) {
@@ -354,17 +362,6 @@ elements.positionTabs.addEventListener("click", (event) => {
     item.classList.toggle("active", item === button);
   });
   renderRankings();
-});
-elements.sleeperTabs.addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-position]");
-  if (!button) {
-    return;
-  }
-  state.activeSleeperPosition = button.dataset.position;
-  elements.sleeperTabs.querySelectorAll("button").forEach((item) => {
-    item.classList.toggle("active", item === button);
-  });
-  renderSleepers();
 });
 document.querySelectorAll(".controls input, .controls select").forEach((field) => {
   field.addEventListener("change", refreshAll);

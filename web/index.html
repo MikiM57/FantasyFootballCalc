@@ -121,8 +121,12 @@
 
         <section class="rankings" aria-label="Player rankings">
           <div class="section-title">
-            <h2>Rankings</h2>
+            <h2>Player Board</h2>
             <span id="rankingCount">0 players</span>
+          </div>
+          <div id="rankingModeTabs" class="ranking-mode-tabs" aria-label="Ranking type">
+            <button type="button" data-mode="overall" class="active">Overall Value</button>
+            <button type="button" data-mode="sleepers">Next-Year Sleepers</button>
           </div>
           <div id="positionTabs" class="position-tabs" aria-label="Ranking position filter">
             <button type="button" data-position="ALL" class="active">All</button>
@@ -142,21 +146,6 @@
           <div id="agentMetrics" class="agent-metrics"></div>
           <p class="panel-note">Runs on deploy, then refreshes online stats and expert signals daily.</p>
         </section>
-      </section>
-
-      <section class="sleepers-panel" aria-label="Next-year sleeper rankings">
-        <div class="section-title">
-          <h2>Next-Year Sleepers</h2>
-          <span id="sleeperCount">0 players</span>
-        </div>
-        <div id="sleeperTabs" class="position-tabs" aria-label="Sleeper position filter">
-          <button type="button" data-position="ALL" class="active">All</button>
-          <button type="button" data-position="QB">QB</button>
-          <button type="button" data-position="RB">RB</button>
-          <button type="button" data-position="WR">WR</button>
-          <button type="button" data-position="TE">TE</button>
-        </div>
-        <div id="sleepers" class="sleepers-list"></div>
       </section>
 
       <section class="metric-guide" aria-label="Metric definitions">

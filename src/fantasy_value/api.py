@@ -137,7 +137,18 @@ def _current_data():
     if ONLINE_STATS_ENABLED and RUNTIME_PLAYERS_PATH.exists():
         players_path = RUNTIME_PLAYERS_PATH
     mentions_path = RUNTIME_MENTIONS_PATH if RUNTIME_MENTIONS_PATH.exists() else MENTIONS_PATH
-    return load_players(players_path), load_mentions(mentions_path)
+    players = _load_players_with_fallback(players_path, CONFIGURED_PLAYERS_PATH)
+    return players, load_mentions(mentions_path)
+
+
+def _load_players_with_fallback(players_path: Path, fallback_path: Path):
+    try:
+        players = load_players(players_path)
+    except (OSError, ValueError, TypeError):
+        players = []
+    if players or players_path == fallback_path:
+        return players
+    return load_players(fallback_path)
 
 
 def _valuation_engine() -> ValuationEngine:

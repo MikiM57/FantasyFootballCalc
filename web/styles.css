@@ -131,7 +131,6 @@ label {
 .result-panel,
 .panel,
 .rankings,
-.sleepers-panel,
 .metric-guide {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -142,7 +141,6 @@ label {
 .trade-side,
 .result-panel,
 .panel,
-.sleepers-panel,
 .metric-guide {
   padding: 16px;
 }
@@ -156,9 +154,15 @@ label {
 .controls,
 .agent-panel,
 .trade-notes,
+.ranking-mode-tabs,
 .position-tabs {
   display: grid;
   gap: 12px;
+}
+
+.ranking-mode-tabs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 10px;
 }
 
 .position-tabs {
@@ -166,6 +170,7 @@ label {
   margin-bottom: 10px;
 }
 
+.ranking-mode-tabs button,
 .position-tabs button {
   min-height: 36px;
   border: 1px solid var(--line);
@@ -173,6 +178,7 @@ label {
   color: var(--muted);
 }
 
+.ranking-mode-tabs button.active,
 .position-tabs button.active {
   background: var(--ink);
   color: white;
@@ -386,10 +392,6 @@ input[type="range"] {
   margin-top: 16px;
 }
 
-.sleepers-panel {
-  margin-top: 16px;
-}
-
 .guide-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -418,10 +420,6 @@ input[type="range"] {
 .rankings {
   min-width: 0;
   padding: 16px;
-}
-
-.sleepers-list {
-  min-width: 0;
 }
 
 .position-header {
@@ -526,6 +524,18 @@ input[type="range"] {
 
 .sleeper-bar span {
   background: var(--blue);
+}
+
+.empty-state {
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+  color: var(--muted);
+  font-weight: 800;
+  text-align: center;
 }
 
 @media (max-width: 1180px) {
