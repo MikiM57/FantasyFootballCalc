@@ -58,21 +58,17 @@ For real player data:
 4. Under **Secret Files**, click **Add Secret File**.
 5. Use filename `players.json`.
 6. Paste the JSON contents.
-7. Add or update this environment variable:
-
-```text
-PLAYERS_FILE=/etc/secrets/players.json
-```
+7. Save and redeploy.
 
 For hand-curated expert sentiment, add another secret file:
 
 ```text
-MENTIONS_FILE=/etc/secrets/mentions.json
+mentions.json
 ```
 
 Then choose **Save, rebuild, and deploy**.
 
-The player file must be a JSON array using the same shape as `data/sample_players.json`. Secret files are best for small data files; for a full production player database, use a database or commit a public non-secret data file into `data/`.
+The app automatically uses `/etc/secrets/players.json` and `/etc/secrets/mentions.json` when those files exist. The player file must be a JSON array using the same shape as `data/sample_players.json`. Secret files are best for small data files; for a full production player database, use a database or commit a public non-secret data file into `data/`.
 
 ## Quick Start
 

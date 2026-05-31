@@ -46,11 +46,11 @@ After deployment, the host gives you a public URL. That is the real website link
 For a quick prototype on Render, use secret files:
 
 ```text
-PLAYERS_FILE=/etc/secrets/players.json
-MENTIONS_FILE=/etc/secrets/mentions.json
+players.json
+mentions.json
 ```
 
-The files must match the sample JSON structure in `data/sample_players.json` and `data/sample_mentions.json`.
+Render mounts those files at `/etc/secrets/players.json` and `/etc/secrets/mentions.json`, and the app automatically uses them when present. The files must match the sample JSON structure in `data/sample_players.json` and `data/sample_mentions.json`.
 
 For production, do not maintain all stats by hand in Render secret files. Use a database plus scheduled ingestion from approved APIs or public/licensed feeds.
 

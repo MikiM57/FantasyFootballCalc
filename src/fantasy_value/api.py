@@ -41,8 +41,20 @@ RUNTIME_DIR = DATA_DIR / "runtime"
 DEFAULT_RUNTIME_MENTIONS_PATH = RUNTIME_DIR / "latest_mentions.json"
 DEFAULT_PLAYERS_PATH = DATA_DIR / "sample_players.json"
 DEFAULT_MENTIONS_PATH = DATA_DIR / "sample_mentions.json"
-PLAYERS_PATH = Path(os.environ.get("PLAYERS_FILE", DEFAULT_PLAYERS_PATH)).resolve()
-MENTIONS_PATH = Path(os.environ.get("MENTIONS_FILE", DEFAULT_MENTIONS_PATH)).resolve()
+SECRET_PLAYERS_PATH = Path("/etc/secrets/players.json")
+SECRET_MENTIONS_PATH = Path("/etc/secrets/mentions.json")
+PLAYERS_PATH = Path(
+    os.environ.get(
+        "PLAYERS_FILE",
+        SECRET_PLAYERS_PATH if SECRET_PLAYERS_PATH.exists() else DEFAULT_PLAYERS_PATH,
+    )
+).resolve()
+MENTIONS_PATH = Path(
+    os.environ.get(
+        "MENTIONS_FILE",
+        SECRET_MENTIONS_PATH if SECRET_MENTIONS_PATH.exists() else DEFAULT_MENTIONS_PATH,
+    )
+).resolve()
 RUNTIME_MENTIONS_PATH = Path(
     os.environ.get("RUNTIME_MENTIONS_FILE", DEFAULT_RUNTIME_MENTIONS_PATH)
 ).resolve()
