@@ -52,7 +52,7 @@
             </div>
           </div>
           <div id="tradeNotes" class="trade-notes"></div>
-          <button id="tradeButton" type="button">Evaluate Trade</button>
+          <div class="auto-status">Auto-updates as selections change</div>
         </div>
 
         <div class="trade-side">
@@ -117,12 +117,53 @@
 
         <section class="panel agent-panel" aria-label="Agent status">
           <div class="section-title">
-            <h2>Daily Agents</h2>
+            <h2>Background Agents</h2>
             <span id="agentState">Idle</span>
           </div>
           <div id="agentMetrics" class="agent-metrics"></div>
-          <button id="agentRunButton" type="button">Run Agents</button>
+          <p class="panel-note">Runs on deploy, then refreshes online stats and expert signals daily.</p>
         </section>
+      </section>
+
+      <section class="metric-guide" aria-label="Metric definitions">
+        <div class="section-title">
+          <h2>Metric Guide</h2>
+          <span>Higher is better unless marked as risk</span>
+        </div>
+        <div class="guide-grid">
+          <article>
+            <strong>Value</strong>
+            <p>0-100 player score from production, role, efficiency, team context, age, market, schedule, expert sentiment, and risk.</p>
+          </article>
+          <article>
+            <strong>Package</strong>
+            <p>Total trade-side value after depth and consolidation adjustments. Two smaller players may not equal one elite starter.</p>
+          </article>
+          <article>
+            <strong>Net</strong>
+            <p>Receive value minus give value. Positive numbers favor the incoming side for the selected roster context.</p>
+          </article>
+          <article>
+            <strong>Avg PPG</strong>
+            <p>Average fantasy points per game using the current scoring model and available weekly production.</p>
+          </article>
+          <article>
+            <strong>ROS Pts</strong>
+            <p>Rest-of-season projected fantasy points based on average points and remaining games.</p>
+          </article>
+          <article>
+            <strong>Schedule</strong>
+            <p>0-100 rest-of-season matchup score. Around 50 is neutral, 65+ is favorable, and below 40 is difficult.</p>
+          </article>
+          <article>
+            <strong>Expert</strong>
+            <p>0-100 favorability from configured article/RSS sources. Around 50 is neutral, 65+ is positive, below 40 is cautious.</p>
+          </article>
+          <article>
+            <strong>Risk</strong>
+            <p>0-100 penalty from injury and role uncertainty. Lower is safer; higher means more downside in the trade package.</p>
+          </article>
+        </div>
       </section>
     </main>
 

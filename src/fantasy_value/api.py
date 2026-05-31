@@ -183,7 +183,7 @@ def agent_status():
         **_scheduler.status(),
         "daily_enabled": os.environ.get("ENABLE_DAILY_AGENTS", "").lower() == "true",
         "online_stats_enabled": ONLINE_STATS_ENABLED,
-        "manual_run_enabled": os.environ.get("ALLOW_AGENT_MANUAL_RUN", "true").lower() == "true",
+        "manual_run_enabled": os.environ.get("ALLOW_AGENT_MANUAL_RUN", "false").lower() == "true",
         "sources_configured": bool(_source_config.rss_feeds or _source_config.article_urls),
         "rss_feeds": len(_source_config.rss_feeds),
         "article_urls": len(_source_config.article_urls),
@@ -192,7 +192,7 @@ def agent_status():
 
 @app.post("/api/agent/run")
 def run_agent(background_tasks: BackgroundTasks):
-    if os.environ.get("ALLOW_AGENT_MANUAL_RUN", "true").lower() != "true":
+    if os.environ.get("ALLOW_AGENT_MANUAL_RUN", "false").lower() != "true":
         raise HTTPException(status_code=403, detail="Manual agent runs are disabled.")
     background_tasks.add_task(_scheduler.run_once)
     return {"status": "queued", "message": "Agent refresh queued."}

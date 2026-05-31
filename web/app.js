@@ -25,8 +25,9 @@ const elements = {
   tradeNotes: document.querySelector("#tradeNotes"),
   agentState: document.querySelector("#agentState"),
   agentMetrics: document.querySelector("#agentMetrics"),
-  agentRunButton: document.querySelector("#agentRunButton"),
 };
+
+let tradeTimer = null;
 
 function leaguePayload() {
   const positional_needs = {};
@@ -84,7 +85,7 @@ function createPlayerSelect(side, index) {
     option.textContent = `${player.name} - ${player.position} ${player.team}`;
     select.append(option);
   });
-  select.addEventListener("change", analyzeTrade);
+  select.addEventListener("change", scheduleTradeAnalysis);
   wrapper.append(select);
   return wrapper;
 }
@@ -136,13 +137,22 @@ async function analyzeTrade() {
     renderEmptyTrade();
     return;
   }
-  const result = await postJson("/api/trade", {
-    ...leaguePayload(),
-    give,
-    receive,
-  });
-  state.lastTrade = result;
-  renderTrade(result);
+  try {
+    const result = await postJson("/api/trade", {
+      ...leaguePayload(),
+      give,
+      receive,
+    });
+    state.lastTrade = result;
+    renderTrade(result);
+  } catch (error) {
+    elements.tradeNotes.innerHTML = `<p>${error.message}</p>`;
+  }
+}
+
+function scheduleTradeAnalysis() {
+  window.clearTimeout(tradeTimer);
+  tradeTimer = window.setTimeout(analyzeTrade, 180);
 }
 
 function renderTrade(result) {
@@ -189,7 +199,7 @@ async function loadAgentStatus() {
     ? "Running"
     : status.daily_enabled
       ? "Scheduled"
-      : "Manual";
+      : "Off";
   const lastRun = status.last_run;
   elements.agentMetrics.innerHTML = `
     ${metric("Feeds", status.rss_feeds)}
@@ -200,20 +210,12 @@ async function loadAgentStatus() {
   `;
 }
 
-async function runAgents() {
-  elements.agentState.textContent = "Queued";
-  await postJson("/api/agent/run", {});
-  setTimeout(loadAgentStatus, 1200);
-}
-
 async function refreshAll() {
   await Promise.all([loadRankings(), loadAgentStatus()]);
   await analyzeTrade();
 }
 
 document.querySelector("#refreshButton").addEventListener("click", refreshAll);
-document.querySelector("#tradeButton").addEventListener("click", analyzeTrade);
-elements.agentRunButton.addEventListener("click", runAgents);
 document.querySelectorAll(".controls input, .controls select").forEach((field) => {
   field.addEventListener("change", refreshAll);
 });

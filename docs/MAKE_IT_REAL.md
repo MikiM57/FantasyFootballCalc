@@ -55,6 +55,8 @@ ONLINE_PLAYER_LIMIT=250
 
 This pulls player metadata from Sleeper and weekly production from nflverse, then writes `data/runtime/latest_players.json`.
 
+The public website should not expose a button that runs agents. Agents are background jobs: they run on startup/deploy and then on the daily scheduler while the service is awake.
+
 For a quick prototype on Render, use secret files:
 
 ```text

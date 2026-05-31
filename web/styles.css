@@ -106,6 +106,7 @@ h2 {
 #status,
 .section-title span,
 .explain,
+.panel-note,
 .team,
 label {
   color: var(--muted);
@@ -129,7 +130,8 @@ label {
 .trade-side,
 .result-panel,
 .panel,
-.rankings {
+.rankings,
+.metric-guide {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -138,7 +140,8 @@ label {
 
 .trade-side,
 .result-panel,
-.panel {
+.panel,
+.metric-guide {
   padding: 16px;
 }
 
@@ -199,6 +202,22 @@ input[type="range"] {
 .agent-metrics {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 14px;
+}
+
+.panel-note,
+.auto-status {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.auto-status {
+  min-height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+  font-weight: 800;
 }
 
 .result-panel {
@@ -279,6 +298,35 @@ input[type="range"] {
   gap: 16px;
 }
 
+.metric-guide {
+  margin-top: 16px;
+}
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.guide-grid article {
+  min-height: 128px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.guide-grid strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.guide-grid p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.42;
+}
+
 .rankings {
   min-width: 0;
   padding: 16px;
@@ -348,7 +396,8 @@ input[type="range"] {
 
 @media (max-width: 1180px) {
   .trade-board,
-  .dashboard-grid {
+  .dashboard-grid,
+  .guide-grid {
     grid-template-columns: 1fr;
   }
 

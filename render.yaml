@@ -7,24 +7,24 @@ services:
     startCommand: uvicorn fantasy_value.api:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: STATS_PROVIDER
-        value: online
+        value: "online"
       - key: ENABLE_ONLINE_STATS
-        value: true
+        value: "true"
       - key: ONLINE_PLAYER_LIMIT
-        value: 250
+        value: "250"
       - key: NFLVERSE_FALLBACK_SEASONS
-        value: 2
+        value: "2"
       - key: ENABLE_SCHEDULE_STRENGTH
-        value: true
+        value: "true"
       - key: RUNTIME_PLAYERS_FILE
         value: data/runtime/latest_players.json
       - key: RUNTIME_MENTIONS_FILE
         value: data/runtime/latest_mentions.json
       - key: ENABLE_DAILY_AGENTS
-        value: true
+        value: "true"
       - key: RUN_AGENTS_ON_START
-        value: true
+        value: "true"
       - key: ALLOW_AGENT_MANUAL_RUN
-        value: true
+        value: "false"
       - key: PYTHON_VERSION
-        value: 3.11.9
+        value: "3.11.9"

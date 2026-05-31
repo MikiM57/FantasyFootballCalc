@@ -66,6 +66,8 @@ The daily agent will:
 - generate `data/runtime/latest_players.json`
 - use that generated player file for rankings and trades
 
+In production, user-triggered agent runs are disabled by default. The service refreshes data in the background on deploy/startup and then on the daily scheduler while the service is awake.
+
 You can control the season and player count:
 
 ```text
