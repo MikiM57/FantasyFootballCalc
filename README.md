@@ -58,6 +58,8 @@ uvicorn fantasy_value.api:app --reload
 
 Then open `http://127.0.0.1:8000`.
 
+If the deployed site shows JSON like `{"detail":"Not Found"}`, open `/api/health` on the same URL. It should report that the `web` and `data` directories exist.
+
 ## Use It In GitHub Codespaces
 
 This is the easiest way to test it without setting up Python on your computer:

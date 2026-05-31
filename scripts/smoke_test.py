@@ -15,6 +15,11 @@ def main() -> None:
     base_url = args.base_url.rstrip("/")
     wait_for_server(base_url)
 
+    health = get_json(f"{base_url}/api/health")
+    assert health["status"] == "ok"
+    assert health["web_dir_exists"] is True
+    assert health["data_dir_exists"] is True
+
     players = get_json(f"{base_url}/api/players")
     assert players, "Expected /api/players to return sample players."
 

@@ -22,7 +22,19 @@ from fantasy_value.repository import load_mentions, load_players
 from fantasy_value.scoring import ValuationEngine
 from fantasy_value.trade import TradeAnalyzer, TradeSide
 
-ROOT = Path(__file__).resolve().parents[2]
+def _find_project_root() -> Path:
+    candidates = [
+        Path(os.environ["PROJECT_ROOT"]).resolve() if os.environ.get("PROJECT_ROOT") else None,
+        Path.cwd().resolve(),
+        Path(__file__).resolve().parents[2],
+    ]
+    for candidate in candidates:
+        if candidate and (candidate / "web").exists() and (candidate / "data").exists():
+            return candidate
+    return Path.cwd().resolve()
+
+
+ROOT = _find_project_root()
 DATA_DIR = ROOT / "data"
 WEB_DIR = ROOT / "web"
 RUNTIME_DIR = DATA_DIR / "runtime"
@@ -151,5 +163,14 @@ def run_agent(background_tasks: BackgroundTasks):
     return {"status": "queued", "message": "Agent refresh queued."}
 
 
-if WEB_DIR.exists():
-    app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
+@app.get("/api/health")
+def health():
+    return {
+        "status": "ok",
+        "root": str(ROOT),
+        "web_dir_exists": WEB_DIR.exists(),
+        "data_dir_exists": DATA_DIR.exists(),
+    }
+
+
+app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
