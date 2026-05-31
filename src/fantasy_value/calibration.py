@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 from fantasy_value.models import Position
@@ -18,9 +18,24 @@ class PositionCalibration:
 
 
 @dataclass(frozen=True)
+class ModelTrainingProfile:
+    trained_seasons: list[int]
+    market_anchor: float
+    component_weights: dict[str, float] = field(default_factory=dict)
+
+
+DEFAULT_MODEL_TRAINING = ModelTrainingProfile(
+    trained_seasons=[],
+    market_anchor=0.0,
+    component_weights={},
+)
+
+
+@dataclass(frozen=True)
 class Calibration:
     seasons: list[int]
     positions: dict[Position, PositionCalibration]
+    model: ModelTrainingProfile = field(default_factory=lambda: DEFAULT_MODEL_TRAINING)
 
 
 DEFAULT_CALIBRATION = Calibration(
@@ -59,6 +74,7 @@ DEFAULT_CALIBRATION = Calibration(
             superflex_multiplier=1.0,
         ),
     },
+    model=DEFAULT_MODEL_TRAINING,
 )
 
 
@@ -76,7 +92,12 @@ def load_calibration(path: str | Path | None) -> Calibration:
         if position in DEFAULT_CALIBRATION.positions
     }
     merged = {**DEFAULT_CALIBRATION.positions, **positions}
-    return Calibration(seasons=raw.get("seasons", []), positions=merged)  # type: ignore[arg-type]
+    model = _load_model_profile(raw.get("model", {}))
+    return Calibration(  # type: ignore[arg-type]
+        seasons=raw.get("seasons", []),
+        positions=merged,
+        model=model,
+    )
 
 
 def save_calibration(path: str | Path, calibration: Calibration) -> None:
@@ -87,6 +108,20 @@ def save_calibration(path: str | Path, calibration: Calibration) -> None:
         "positions": {
             position: asdict(values) for position, values in calibration.positions.items()
         },
+        "model": asdict(calibration.model),
     }
     with output_path.open("w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2)
+
+
+def _load_model_profile(raw: object) -> ModelTrainingProfile:
+    if not isinstance(raw, dict):
+        return DEFAULT_MODEL_TRAINING
+    weights = raw.get("component_weights", {})
+    if not isinstance(weights, dict):
+        weights = {}
+    return ModelTrainingProfile(
+        trained_seasons=list(raw.get("trained_seasons", [])),
+        market_anchor=float(raw.get("market_anchor", DEFAULT_MODEL_TRAINING.market_anchor)),
+        component_weights={str(key): float(value) for key, value in weights.items()},
+    )

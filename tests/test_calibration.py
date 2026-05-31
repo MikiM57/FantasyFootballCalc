@@ -32,9 +32,11 @@ def test_calibration_from_weekly_stats_builds_position_baselines():
                 }
             )
 
-    calibration = calibration_from_weekly_stats({2023: rows})
+    calibration = calibration_from_weekly_stats({2023: rows}, training_season=2023)
 
     assert calibration.seasons == [2023]
+    assert calibration.model.trained_seasons == [2023]
+    assert calibration.model.market_anchor > 0
     assert calibration.positions["QB"].elite_ppg >= calibration.positions["QB"].starter_ppg
     assert calibration.positions["WR"].replacement_ppg > 0
 

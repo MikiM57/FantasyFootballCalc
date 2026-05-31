@@ -3,14 +3,19 @@ from __future__ import annotations
 import csv
 import io
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from pathlib import Path
 from statistics import mean
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from fantasy_value.calibration import Calibration, PositionCalibration, save_calibration
+from fantasy_value.calibration import (
+    Calibration,
+    ModelTrainingProfile,
+    PositionCalibration,
+    save_calibration,
+)
 from fantasy_value.models import PlayerStats, Position
 from fantasy_value.repository import save_players
 
@@ -67,7 +72,11 @@ class OnlineNflStatsAgent:
                 limit=self.config.limit,
             )
             save_players(self.output_path, players)
-            calibration = build_historical_calibration(self.config, current_season=season)
+            calibration = build_historical_calibration(
+                self.config,
+                current_season=season,
+                current_rows=rows,
+            )
             if self.calibration_output_path:
                 save_calibration(self.calibration_output_path, calibration)
             return OnlineStatsRunSummary(
@@ -149,14 +158,20 @@ def fetch_historical_weekly_stats(
 def build_historical_calibration(
     config: OnlineStatsConfig,
     current_season: int,
+    current_rows: list[dict[str, str]] | None = None,
 ) -> Calibration:
     seasons = fetch_historical_weekly_stats(config, current_season)
-    return calibration_from_weekly_stats(seasons)
+    if current_rows:
+        seasons[current_season] = current_rows
+    return calibration_from_weekly_stats(seasons, training_season=current_season)
 
 
-def calibration_from_weekly_stats(seasons: dict[int, list[dict[str, str]]]) -> Calibration:
+def calibration_from_weekly_stats(
+    seasons: dict[int, list[dict[str, str]]],
+    training_season: int | None = None,
+) -> Calibration:
     ppg_by_position: dict[Position, list[float]] = {"QB": [], "RB": [], "WR": [], "TE": []}
-    for rows in seasons.values():
+    for rows in (_regular_season_rows(rows) for rows in seasons.values()):
         grouped: dict[str, list[dict[str, str]]] = {}
         for row in rows:
             position = _position(row)
@@ -177,7 +192,49 @@ def calibration_from_weekly_stats(seasons: dict[int, list[dict[str, str]]]) -> C
         for position, values in ppg_by_position.items()
     }
     seasons_used = sorted(season for season, rows in seasons.items() if rows)
-    return Calibration(seasons=seasons_used, positions=positions)
+    training_rows = seasons.get(training_season or 0)
+    if training_rows is None and seasons_used:
+        training_rows = seasons[seasons_used[-1]]
+        training_season = seasons_used[-1]
+    model = model_training_from_weekly_stats(training_rows or [], training_season)
+    return Calibration(seasons=seasons_used, positions=positions, model=model)
+
+
+def model_training_from_weekly_stats(
+    rows: list[dict[str, str]],
+    season: int | None,
+) -> ModelTrainingProfile:
+    rows = _regular_season_rows(rows)
+    if not rows or season is None:
+        return ModelTrainingProfile(trained_seasons=[], market_anchor=0.0)
+    player_count = _qualified_player_count(rows)
+    market_anchor = 0.30 if player_count >= 80 else 0.24
+    return ModelTrainingProfile(
+        trained_seasons=[season],
+        market_anchor=market_anchor,
+        component_weights={
+            "production": 0.31,
+            "opportunity": 0.20,
+            "efficiency": 0.08,
+            "environment": 0.06,
+            "sentiment": 0.06,
+            "market": 0.20,
+            "schedule": 0.03,
+            "age": 0.08,
+            "risk": 0.12,
+        },
+    )
+
+
+def _qualified_player_count(rows: list[dict[str, str]]) -> int:
+    grouped: dict[str, list[float]] = {}
+    for row in rows:
+        position = _position(row)
+        if position not in FANTASY_POSITIONS:
+            continue
+        player_id = row.get("player_id") or row.get("player_gsis_id") or _slug(row.get("player_name", ""))
+        grouped.setdefault(player_id, []).append(_fantasy_points(row))
+    return sum(1 for points in grouped.values() if len([point for point in points if point > 0]) >= 4)
 
 
 def _position_calibration_from_ppg(
@@ -230,7 +287,7 @@ def _one_qb_multiplier(position: Position, elite: float, replacement: float) -> 
     if position != "QB":
         return 1.05 if position == "WR" else 1.0
     spread = max(1.0, elite - replacement)
-    return _clip(0.68 + spread / 40, 0.68, 0.86)
+    return _clip(0.64 + spread / 50, 0.64, 0.78)
 
 
 def fetch_schedules(url: str) -> list[dict[str, str]]:
@@ -250,6 +307,15 @@ def fetch_csv(url: str) -> list[dict[str, str]]:
     return rows
 
 
+def _regular_season_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    output = []
+    for row in rows:
+        season_type = str(row.get("season_type") or row.get("game_type") or "REG").upper()
+        if season_type in {"REG", "REGULAR"}:
+            output.append(row)
+    return output
+
+
 def build_player_stats(
     weekly_rows: list[dict[str, str]],
     sleeper_players: dict[str, dict[str, object]],
@@ -257,6 +323,7 @@ def build_player_stats(
     season: int,
     limit: int,
 ) -> list[PlayerStats]:
+    weekly_rows = _regular_season_rows(weekly_rows)
     sleeper_by_name = _sleeper_by_name(sleeper_players)
     grouped: dict[str, list[dict[str, str]]] = {}
     for row in weekly_rows:
@@ -275,7 +342,66 @@ def build_player_stats(
         for player_id, rows in grouped.items()
     ]
     players = [player for player in players if player.fantasy_points_per_game > 0]
+    players = _apply_consensus_market_values(players)
     return sorted(players, key=lambda player: player.projected_points, reverse=True)[:limit]
+
+
+def _apply_consensus_market_values(players: list[PlayerStats]) -> list[PlayerStats]:
+    output: list[PlayerStats] = []
+    grouped: dict[Position, list[PlayerStats]] = {"QB": [], "RB": [], "WR": [], "TE": []}
+    for player in players:
+        if player.position in grouped:
+            grouped[player.position].append(player)
+    for position, position_players in grouped.items():
+        ordered = sorted(position_players, key=_market_sort_key, reverse=True)
+        ppg_values = [player.fantasy_points_per_game for player in ordered]
+        replacement = _rank_value(ppg_values, {"QB": 18, "RB": 36, "WR": 42, "TE": 18}[position])
+        elite = _rank_value(ppg_values, {"QB": 3, "RB": 6, "WR": 8, "TE": 3}[position])
+        for rank, player in enumerate(ordered, start=1):
+            market = _consensus_market_score(position, rank, player, replacement, elite)
+            output.append(replace(player, market_value=market))
+    return output
+
+
+def _market_sort_key(player: PlayerStats) -> float:
+    return (
+        player.fantasy_points_per_game * 0.70
+        + (player.projected_points / max(1, player.remaining_games)) * 0.15
+        + player.trend_score * 0.08
+        + player.high_value_touch_rate * 0.35
+    )
+
+
+def _consensus_market_score(
+    position: Position,
+    rank: int,
+    player: PlayerStats,
+    replacement: float,
+    elite: float,
+) -> float:
+    tier_score = _interpolated_rank_score(position, rank)
+    edge = (player.fantasy_points_per_game - replacement) / max(1.0, elite - replacement)
+    ppg_adjustment = (edge - 0.45) * 7.0
+    trend_adjustment = (player.trend_score - 50.0) * 0.045
+    risk_adjustment = player.role_uncertainty * 6.0 + player.injury_risk * 5.0
+    high = 84.0 if position == "QB" else 96.0
+    return round(_clip(tier_score + ppg_adjustment + trend_adjustment - risk_adjustment, 10, high), 2)
+
+
+def _interpolated_rank_score(position: Position, rank: int) -> float:
+    tiers = {
+        "QB": [(1, 82.0), (3, 78.0), (6, 72.0), (12, 61.0), (18, 44.0), (30, 22.0)],
+        "RB": [(1, 96.0), (6, 88.0), (12, 78.0), (24, 62.0), (36, 44.0), (60, 22.0)],
+        "WR": [(1, 96.0), (8, 88.0), (12, 82.0), (24, 68.0), (36, 54.0), (60, 32.0)],
+        "TE": [(1, 88.0), (3, 78.0), (6, 68.0), (12, 54.0), (18, 39.0), (30, 22.0)],
+    }[position]
+    if rank <= tiers[0][0]:
+        return tiers[0][1]
+    for (left_rank, left_score), (right_rank, right_score) in zip(tiers, tiers[1:]):
+        if rank <= right_rank:
+            distance = (rank - left_rank) / max(1, right_rank - left_rank)
+            return left_score + (right_score - left_score) * distance
+    return tiers[-1][1]
 
 
 def _to_player_stats(
@@ -286,7 +412,7 @@ def _to_player_stats(
     schedule_by_team: dict[str, list[str]],
 ) -> PlayerStats:
     latest = rows[-1]
-    name = latest.get("player_name") or latest.get("player_display_name") or player_id
+    name = latest.get("player_display_name") or latest.get("player_name") or player_id
     sleeper = sleeper_by_name.get(_slug(name), {})
     position = _position(latest)
     team = latest.get("recent_team") or latest.get("team") or str(sleeper.get("team") or "FA")
@@ -322,7 +448,7 @@ def _to_player_stats(
         explosive_play_rate=_explosive_proxy(rows),
         team_implied_points=22.5,
         offensive_environment=_clip(average_points / 25, 0.25, 0.95),
-        injury_risk=_injury_risk(sleeper),
+        injury_risk=max(_injury_risk(sleeper), _availability_risk(games)),
         role_uncertainty=_role_uncertainty(games, trend),
         market_value=round(market, 2),
         average_draft_position=None,
@@ -497,6 +623,18 @@ def _injury_risk(sleeper: dict[str, object]) -> float:
     if any(term in status for term in ("question", "doubt")):
         return 0.45
     return 0.16
+
+
+def _availability_risk(games: int) -> float:
+    if games >= 15:
+        return 0.12
+    if games >= 12:
+        return 0.22
+    if games >= 8:
+        return 0.34
+    if games >= 4:
+        return 0.46
+    return 0.58
 
 
 def _role_uncertainty(games: int, trend: float) -> float:

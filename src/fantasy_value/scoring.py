@@ -92,6 +92,7 @@ class ValuationEngine:
         )
         standalone += self._starter_bonus(player, self.calibration)
         standalone *= scarcity
+        standalone = self._market_anchored_value(standalone, market, league)
 
         roster_adjusted = standalone + self._context_adjustment(player, roster, league)
         explanation = self._explain(
@@ -219,8 +220,7 @@ class ValuationEngine:
         role = player.role_uncertainty * 100
         return self._clip(injury * 0.55 + role * 0.45)
 
-    @staticmethod
-    def _weights(league: LeagueSettings) -> dict[str, float]:
+    def _weights(self, league: LeagueSettings) -> dict[str, float]:
         weights = {
             "production": 0.25,
             "opportunity": 0.22,
@@ -244,7 +244,27 @@ class ValuationEngine:
             weights["schedule"] += 0.03
             weights["age"] -= 0.06
             weights["market"] -= 0.03
+        learned = self.calibration.model.component_weights
+        if learned:
+            weights = {
+                key: weights[key] * 0.45 + learned.get(key, weights[key]) * 0.55
+                for key in weights
+            }
         return weights
+
+    def _market_anchored_value(
+        self,
+        standalone: float,
+        market: float,
+        league: LeagueSettings,
+    ) -> float:
+        anchor = self.calibration.model.market_anchor
+        if league.superflex:
+            anchor *= 0.65
+        if league.dynasty:
+            anchor *= 0.9
+        anchor = self._clip(anchor, 0.0, 0.45)
+        return standalone * (1 - anchor) + market * anchor
 
     @staticmethod
     def _starter_bonus(player: PlayerStats, calibration: Calibration) -> float:

@@ -1,0 +1,60 @@
+{
+  "seasons": [
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "positions": {
+    "QB": {
+      "baseline_ppg": 12.17,
+      "starter_ppg": 24.44,
+      "elite_ppg": 26.0,
+      "replacement_ppg": 23.42,
+      "one_qb_multiplier": 0.692,
+      "superflex_multiplier": 1.186
+    },
+    "RB": {
+      "baseline_ppg": 3.98,
+      "starter_ppg": 16.18,
+      "elite_ppg": 20.77,
+      "replacement_ppg": 15.57,
+      "one_qb_multiplier": 1.0,
+      "superflex_multiplier": 1.0
+    },
+    "WR": {
+      "baseline_ppg": 4.05,
+      "starter_ppg": 14.75,
+      "elite_ppg": 18.21,
+      "replacement_ppg": 14.29,
+      "one_qb_multiplier": 1.05,
+      "superflex_multiplier": 1.0
+    },
+    "TE": {
+      "baseline_ppg": 3.23,
+      "starter_ppg": 11.61,
+      "elite_ppg": 14.56,
+      "replacement_ppg": 11.14,
+      "one_qb_multiplier": 1.0,
+      "superflex_multiplier": 1.0
+    }
+  },
+  "model": {
+    "trained_seasons": [
+      2024
+    ],
+    "market_anchor": 0.3,
+    "component_weights": {
+      "production": 0.31,
+      "opportunity": 0.2,
+      "efficiency": 0.08,
+      "environment": 0.06,
+      "sentiment": 0.06,
+      "market": 0.2,
+      "schedule": 0.03,
+      "age": 0.08,
+      "risk": 0.12
+    }
+  }
+}

@@ -56,6 +56,8 @@ const metricTooltips = {
   Stats: "Online player-stat ingestion status from the background agent.",
   Sources: "Whether expert article/RSS sources are configured or the app is using sample sentiment.",
   Last: "Most recent background agent run status.",
+  Train:
+    "Season used for the latest model calibration. The app uses the newest nflverse season it can load.",
   Sleeper:
     "0-100 next-year breakout score based on youth, role growth, efficiency, trend, value gap, and risk.",
   Gap:
@@ -330,6 +332,7 @@ async function loadAgentStatus() {
     ${metric("Feeds", status.rss_feeds)}
     ${metric("URLs", status.article_urls)}
     ${metric("Stats", lastRun?.stats_status || (status.online_stats_enabled ? "On" : "Off"))}
+    ${metric("Train", status.trained_seasons?.join(", ") || "None")}
     ${metric("Sources", status.sources_configured ? "Ready" : "Sample")}
     ${metric("Last", lastRun ? lastRun.status : "None")}
   `;

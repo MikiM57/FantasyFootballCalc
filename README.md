@@ -241,7 +241,7 @@ base value =
 
 League settings modify the weights. Dynasty leagues emphasize age and future value. Superflex boosts quarterbacks. TE premium boosts tight ends with strong target roles. Roster context then shifts values based on team need and competitive window.
 
-One-QB leagues discount quarterbacks because replacement options are easier to find. Superflex leagues boost quarterbacks because extra QB starters are scarce. When online stats are enabled, these positional baselines, replacement levels, and QB multipliers are calibrated from historical nflverse seasons instead of only fixed defaults. The rankings UI also groups players by position so a QB spike week does not visually crowd out elite WR/RB/TE comparisons.
+One-QB leagues discount quarterbacks because replacement options are easier to find. Superflex leagues boost quarterbacks because extra QB starters are scarce. When online stats are enabled, the background agent trains a calibration profile from the latest completed nflverse season it can load, then blends that with recent historical seasons for positional baselines. That profile includes replacement levels, one-QB QB discounts, component weights, and a consensus-style market anchor so rankings stay closer to normal fantasy value ranges instead of simply following raw points. The rankings UI also groups players by position so a QB spike week does not visually crowd out elite WR/RB/TE comparisons.
 
 ## Next-Year Sleepers
 

@@ -214,6 +214,7 @@ def trade(payload: TradePayload):
 
 @app.get("/api/agent/status")
 def agent_status():
+    calibration = load_calibration(RUNTIME_CALIBRATION_PATH)
     return {
         **_scheduler.status(),
         "daily_enabled": os.environ.get("ENABLE_DAILY_AGENTS", "").lower() == "true",
@@ -222,6 +223,8 @@ def agent_status():
         "sources_configured": bool(_source_config.rss_feeds or _source_config.article_urls),
         "rss_feeds": len(_source_config.rss_feeds),
         "article_urls": len(_source_config.article_urls),
+        "trained_seasons": calibration.model.trained_seasons,
+        "market_anchor": calibration.model.market_anchor,
     }
 
 

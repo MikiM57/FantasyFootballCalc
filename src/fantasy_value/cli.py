@@ -8,6 +8,7 @@ from pathlib import Path
 from fantasy_value.agents.article_sources import ArticleSourceConfig
 from fantasy_value.agents.online_stats_agent import OnlineNflStatsAgent, OnlineStatsConfig
 from fantasy_value.agents.pipeline import InternetAgentPipeline
+from fantasy_value.calibration import load_calibration
 from fantasy_value.models import LeagueSettings, RosterContext
 from fantasy_value.repository import load_mentions, load_players
 from fantasy_value.scoring import ValuationEngine
@@ -21,12 +22,14 @@ def main() -> None:
     rank_parser = subparsers.add_parser("rank", help="Rank players from JSON inputs.")
     rank_parser.add_argument("--players", required=True)
     rank_parser.add_argument("--mentions", required=True)
+    rank_parser.add_argument("--calibration")
     rank_parser.add_argument("--superflex", action="store_true")
     rank_parser.add_argument("--redraft", action="store_true")
 
     trade_parser = subparsers.add_parser("trade", help="Analyze a player trade.")
     trade_parser.add_argument("--players", required=True)
     trade_parser.add_argument("--mentions", required=True)
+    trade_parser.add_argument("--calibration")
     trade_parser.add_argument("--give", required=True, help="Comma-separated player ids.")
     trade_parser.add_argument("--get", required=True, help="Comma-separated player ids.")
     trade_parser.add_argument("--superflex", action="store_true")
@@ -69,7 +72,7 @@ def _league_from_args(args: argparse.Namespace) -> LeagueSettings:
 def _rank(args: argparse.Namespace) -> None:
     players = load_players(args.players)
     mentions = load_mentions(args.mentions)
-    rankings = ValuationEngine().rank_players(
+    rankings = _engine_from_args(args).rank_players(
         players,
         mentions,
         _league_from_args(args),
@@ -81,7 +84,7 @@ def _rank(args: argparse.Namespace) -> None:
 def _trade(args: argparse.Namespace) -> None:
     players = load_players(args.players)
     mentions = load_mentions(args.mentions)
-    result = TradeAnalyzer().analyze(
+    result = TradeAnalyzer(engine=_engine_from_args(args)).analyze(
         players=players,
         mentions=mentions,
         side_a=TradeSide(
@@ -96,6 +99,12 @@ def _trade(args: argparse.Namespace) -> None:
         roster=RosterContext(),
     )
     print(json.dumps(asdict(result), indent=2))
+
+
+def _engine_from_args(args: argparse.Namespace) -> ValuationEngine:
+    if getattr(args, "calibration", None):
+        return ValuationEngine(load_calibration(args.calibration))
+    return ValuationEngine()
 
 
 def _agents(args: argparse.Namespace) -> None:
