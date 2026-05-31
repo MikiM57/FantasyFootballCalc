@@ -131,6 +131,7 @@ label {
 .result-panel,
 .panel,
 .rankings,
+.sleepers-panel,
 .metric-guide {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -141,6 +142,7 @@ label {
 .trade-side,
 .result-panel,
 .panel,
+.sleepers-panel,
 .metric-guide {
   padding: 16px;
 }
@@ -384,6 +386,10 @@ input[type="range"] {
   margin-top: 16px;
 }
 
+.sleepers-panel {
+  margin-top: 16px;
+}
+
 .guide-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -412,6 +418,10 @@ input[type="range"] {
 .rankings {
   min-width: 0;
   padding: 16px;
+}
+
+.sleepers-list {
+  min-width: 0;
 }
 
 .position-header {
@@ -512,6 +522,10 @@ input[type="range"] {
   height: 100%;
   border-radius: inherit;
   background: var(--accent);
+}
+
+.sleeper-bar span {
+  background: var(--blue);
 }
 
 @media (max-width: 1180px) {

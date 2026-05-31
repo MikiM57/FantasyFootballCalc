@@ -2,13 +2,18 @@ const state = {
   players: [],
   playerById: new Map(),
   rankings: [],
+  sleepers: [],
   lastTrade: null,
   activePosition: "ALL",
+  activeSleeperPosition: "ALL",
 };
 
 const elements = {
   rankings: document.querySelector("#rankings"),
   positionTabs: document.querySelector("#positionTabs"),
+  sleepers: document.querySelector("#sleepers"),
+  sleeperTabs: document.querySelector("#sleeperTabs"),
+  sleeperCount: document.querySelector("#sleeperCount"),
   status: document.querySelector("#status"),
   rankingCount: document.querySelector("#rankingCount"),
   scoring: document.querySelector("#scoring"),
@@ -53,6 +58,12 @@ const metricTooltips = {
   Stats: "Online player-stat ingestion status from the background agent.",
   Sources: "Whether expert article/RSS sources are configured or the app is using sample sentiment.",
   Last: "Most recent background agent run status.",
+  Sleeper:
+    "0-100 next-year breakout score based on youth, role growth, efficiency, trend, value gap, and risk.",
+  Gap:
+    "Model value minus market score. A positive gap means the model thinks the player is undervalued.",
+  Trend: "0-100 recent production momentum score. Higher means the player's recent output is improving.",
+  Opp: "0-100 opportunity score from touches, targets, routes, snaps, and high-value usage.",
 };
 
 function leaguePayload() {
@@ -118,8 +129,15 @@ function createPlayerSelect(side, index) {
 
 async function loadRankings() {
   elements.status.textContent = "Refreshing";
-  state.rankings = await postJson("/api/rankings", leaguePayload());
+  const payload = leaguePayload();
+  const [rankings, sleepers] = await Promise.all([
+    postJson("/api/rankings", payload),
+    postJson("/api/sleepers", payload),
+  ]);
+  state.rankings = rankings;
+  state.sleepers = sleepers;
   renderRankings();
+  renderSleepers();
   elements.status.textContent = "Ready";
 }
 
@@ -139,6 +157,27 @@ function renderRankings() {
     });
   });
   elements.rankingCount.textContent = `${shown} players`;
+}
+
+function renderSleepers() {
+  elements.sleepers.innerHTML = "";
+  const positions =
+    state.activeSleeperPosition === "ALL"
+      ? ["QB", "RB", "WR", "TE"]
+      : [state.activeSleeperPosition];
+  let shown = 0;
+  positions.forEach((position) => {
+    const players = state.sleepers.filter((player) => player.position === position);
+    if (!players.length) {
+      return;
+    }
+    elements.sleepers.append(positionHeader(position, players.length));
+    players.slice(0, 12).forEach((player, index) => {
+      elements.sleepers.append(sleeperRow(player, index));
+      shown += 1;
+    });
+  });
+  elements.sleeperCount.textContent = `${shown} players`;
 }
 
 function positionHeader(position, count) {
@@ -167,6 +206,29 @@ function playerRow(player, index) {
       ${metric("ROS", player.rest_of_season_points)}
       ${metric("Sched", player.strength_of_schedule)}
       ${metric("Expert", player.expert_favorability)}
+    `;
+  return row;
+}
+
+function sleeperRow(player, index) {
+  const row = document.createElement("article");
+  row.className = "player-row sleeper-row";
+  row.innerHTML = `
+      <div class="rank">${index + 1}</div>
+      <div class="player-main">
+        <div class="player-name">
+          ${player.name}
+          <span class="badge">${player.position}</span>
+          <span class="team">${player.team}</span>
+        </div>
+        <div class="value-bar sleeper-bar" aria-hidden="true"><span style="width: ${barWidth(player.sleeper_score)}%"></span></div>
+        <div class="explain">${player.explanation[0]}</div>
+      </div>
+      ${metric("Sleeper", player.sleeper_score)}
+      ${metric("Value", player.current_value)}
+      ${metric("Gap", player.value_gap)}
+      ${metric("Trend", player.trend_score)}
+      ${metric("Opp", player.opportunity_score)}
     `;
   return row;
 }
@@ -292,6 +354,17 @@ elements.positionTabs.addEventListener("click", (event) => {
     item.classList.toggle("active", item === button);
   });
   renderRankings();
+});
+elements.sleeperTabs.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-position]");
+  if (!button) {
+    return;
+  }
+  state.activeSleeperPosition = button.dataset.position;
+  elements.sleeperTabs.querySelectorAll("button").forEach((item) => {
+    item.classList.toggle("active", item === button);
+  });
+  renderSleepers();
 });
 document.querySelectorAll(".controls input, .controls select").forEach((field) => {
   field.addEventListener("change", refreshAll);

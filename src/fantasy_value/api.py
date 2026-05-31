@@ -22,7 +22,9 @@ from fantasy_value.agents.pipeline import InternetAgentPipeline
 from fantasy_value.agents.scheduler import DailyAgentScheduler
 from fantasy_value.repository import load_mentions, load_players
 from fantasy_value.scoring import ValuationEngine
+from fantasy_value.sleepers import SleeperRanker
 from fantasy_value.trade import TradeAnalyzer, TradeSide
+
 
 def _find_project_root() -> Path:
     candidates = [
@@ -163,6 +165,18 @@ def players():
 def rankings(payload: LeaguePayload):
     sample_players, mentions = _current_data()
     values = _valuation_engine().rank_players(
+        sample_players,
+        mentions,
+        _settings(payload),
+        _roster(payload),
+    )
+    return [asdict(value) for value in values]
+
+
+@app.post("/api/sleepers")
+def sleepers(payload: LeaguePayload):
+    sample_players, mentions = _current_data()
+    values = SleeperRanker(engine=_valuation_engine()).rank(
         sample_players,
         mentions,
         _settings(payload),

@@ -38,6 +38,20 @@ def main() -> None:
     assert "value" in rankings[0], "Expected rankings to include player values."
     assert "explanation" in rankings[0], "Expected rankings to include explanations."
 
+    sleepers = post_json(
+        f"{base_url}/api/sleepers",
+        {
+            "scoring": "half_ppr",
+            "dynasty": True,
+            "superflex": False,
+            "tight_end_premium": 0.0,
+            "competitive_window": "balanced",
+            "positional_needs": {},
+        },
+    )
+    assert sleepers, "Expected /api/sleepers to return next-year sleeper candidates."
+    assert "sleeper_score" in sleepers[0]
+
     trade = post_json(
         f"{base_url}/api/trade",
         {

@@ -144,6 +144,21 @@
         </section>
       </section>
 
+      <section class="sleepers-panel" aria-label="Next-year sleeper rankings">
+        <div class="section-title">
+          <h2>Next-Year Sleepers</h2>
+          <span id="sleeperCount">0 players</span>
+        </div>
+        <div id="sleeperTabs" class="position-tabs" aria-label="Sleeper position filter">
+          <button type="button" data-position="ALL" class="active">All</button>
+          <button type="button" data-position="QB">QB</button>
+          <button type="button" data-position="RB">RB</button>
+          <button type="button" data-position="WR">WR</button>
+          <button type="button" data-position="TE">TE</button>
+        </div>
+        <div id="sleepers" class="sleepers-list"></div>
+      </section>
+
       <section class="metric-guide" aria-label="Metric definitions">
         <div class="section-title">
           <h2>Metric Guide</h2>
@@ -181,6 +196,14 @@
           <article>
             <strong>Risk</strong>
             <p>0-100 penalty from injury and role uncertainty. Lower is safer; higher means more downside in the trade package.</p>
+          </article>
+          <article>
+            <strong>Sleeper</strong>
+            <p>0-100 next-year breakout score. It rewards youth, improving trend, role growth, efficiency, and undervalued market price.</p>
+          </article>
+          <article>
+            <strong>Gap</strong>
+            <p>Model value minus market score. Positive gaps suggest the model sees more value than the current price implies.</p>
           </article>
         </div>
       </section>

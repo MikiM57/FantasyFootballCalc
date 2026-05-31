@@ -19,6 +19,7 @@ The goal is to improve on simple trade calculators by separating:
 - A trade analyzer that accounts for roster needs and league format
 - Trade packages with up to 5 players on each side
 - Player metrics for value, average points, projected points, schedule, trend, risk, and expert favorability
+- Next-year sleeper rankings using youth, role growth, trend, efficiency, value gap, and risk
 - A FastAPI app with static web UI
 - Sample player and article-sentiment data
 - Unit tests for the core scoring behavior
@@ -241,6 +242,19 @@ base value =
 League settings modify the weights. Dynasty leagues emphasize age and future value. Superflex boosts quarterbacks. TE premium boosts tight ends with strong target roles. Roster context then shifts values based on team need and competitive window.
 
 One-QB leagues discount quarterbacks because replacement options are easier to find. Superflex leagues boost quarterbacks because extra QB starters are scarce. When online stats are enabled, these positional baselines, replacement levels, and QB multipliers are calibrated from historical nflverse seasons instead of only fixed defaults. The rankings UI also groups players by position so a QB spike week does not visually crowd out elite WR/RB/TE comparisons.
+
+## Next-Year Sleepers
+
+The site includes a separate sleeper ranking for next season. This is not the same as the main player value ranking. The sleeper score rewards:
+
+- young or near-peak age curves
+- improving recent trend
+- strong role and opportunity indicators
+- efficiency that supports a bigger role
+- positive model-value gap versus market score
+- manageable risk
+
+Established expensive stars are capped so they do not dominate the sleeper board just because they are great players.
 
 This is meant to be a strong baseline before adding a trained model.
 

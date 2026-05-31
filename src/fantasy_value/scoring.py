@@ -40,6 +40,9 @@ class ValuationEngine:
     visible so rankings can be debugged before adding trained models.
     """
 
+    def __init__(self, calibration: Calibration | None = None) -> None:
+        self.calibration = calibration or DEFAULT_CALIBRATION
+
     def rank_players(
         self,
         players: list[PlayerStats],
@@ -337,5 +340,3 @@ def average_value(values: list[PlayerValuation]) -> float:
     if not values:
         return 0.0
     return round(mean(item.value for item in values), 2)
-    def __init__(self, calibration: Calibration | None = None) -> None:
-        self.calibration = calibration or DEFAULT_CALIBRATION
