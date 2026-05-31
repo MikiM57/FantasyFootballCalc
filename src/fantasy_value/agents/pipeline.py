@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from fantasy_value.agents.online_stats_agent import OnlineNflStatsAgent, OnlineStatsRunSummary
 from fantasy_value.agents.article_sources import ArticleSourceConfig, load_articles
 from fantasy_value.agents.sentiment_agent import ExpertSentimentAgent
 from fantasy_value.repository import load_players, save_mentions
@@ -17,6 +18,8 @@ class AgentRunSummary:
     players_seen: int
     articles_seen: int
     mentions_found: int
+    stats_status: str | None
+    stats_players_written: int
     output_path: str | None
     message: str
 
@@ -29,10 +32,16 @@ class InternetAgentPipeline:
     players_path: Path
     mentions_output_path: Path
     source_config: ArticleSourceConfig
+    stats_agent: OnlineNflStatsAgent | None = None
+    fallback_players_path: Path | None = None
 
     def run(self) -> AgentRunSummary:
         started_at = _now()
-        players = load_players(self.players_path)
+        stats_summary = self._refresh_stats()
+        players_path = self.players_path if self.players_path.exists() else self.fallback_players_path
+        if not players_path:
+            players_path = self.players_path
+        players = load_players(players_path)
         if not self.source_config.rss_feeds and not self.source_config.article_urls:
             return AgentRunSummary(
                 status="skipped",
@@ -41,6 +50,8 @@ class InternetAgentPipeline:
                 players_seen=len(players),
                 articles_seen=0,
                 mentions_found=0,
+                stats_status=stats_summary.status if stats_summary else None,
+                stats_players_written=stats_summary.players_written if stats_summary else 0,
                 output_path=None,
                 message=(
                     "No ARTICLE_FEEDS or ARTICLE_URLS are configured. "
@@ -59,6 +70,8 @@ class InternetAgentPipeline:
                 players_seen=len(players),
                 articles_seen=len(articles),
                 mentions_found=len(mentions),
+                stats_status=stats_summary.status if stats_summary else None,
+                stats_players_written=stats_summary.players_written if stats_summary else 0,
                 output_path=str(self.mentions_output_path),
                 message="Expert sentiment refreshed from configured sources.",
             )
@@ -70,9 +83,16 @@ class InternetAgentPipeline:
                 players_seen=len(players),
                 articles_seen=0,
                 mentions_found=0,
+                stats_status=stats_summary.status if stats_summary else None,
+                stats_players_written=stats_summary.players_written if stats_summary else 0,
                 output_path=None,
                 message=f"Agent refresh failed: {exc}",
             )
+
+    def _refresh_stats(self) -> OnlineStatsRunSummary | None:
+        if not self.stats_agent:
+            return None
+        return self.stats_agent.run()
 
 
 def _now() -> str:

@@ -16,6 +16,7 @@ except ImportError as exc:  # pragma: no cover - exercised only without API extr
 
 from fantasy_value.models import LeagueSettings, RosterContext
 from fantasy_value.agents.article_sources import source_config_from_env
+from fantasy_value.agents.online_stats_agent import OnlineNflStatsAgent, config_from_env
 from fantasy_value.agents.pipeline import InternetAgentPipeline
 from fantasy_value.agents.scheduler import DailyAgentScheduler
 from fantasy_value.repository import load_mentions, load_players
@@ -39,11 +40,12 @@ DATA_DIR = ROOT / "data"
 WEB_DIR = ROOT / "web"
 RUNTIME_DIR = DATA_DIR / "runtime"
 DEFAULT_RUNTIME_MENTIONS_PATH = RUNTIME_DIR / "latest_mentions.json"
+DEFAULT_RUNTIME_PLAYERS_PATH = RUNTIME_DIR / "latest_players.json"
 DEFAULT_PLAYERS_PATH = DATA_DIR / "sample_players.json"
 DEFAULT_MENTIONS_PATH = DATA_DIR / "sample_mentions.json"
 SECRET_PLAYERS_PATH = Path("/etc/secrets/players.json")
 SECRET_MENTIONS_PATH = Path("/etc/secrets/mentions.json")
-PLAYERS_PATH = Path(
+CONFIGURED_PLAYERS_PATH = Path(
     os.environ.get(
         "PLAYERS_FILE",
         SECRET_PLAYERS_PATH if SECRET_PLAYERS_PATH.exists() else DEFAULT_PLAYERS_PATH,
@@ -58,6 +60,8 @@ MENTIONS_PATH = Path(
 RUNTIME_MENTIONS_PATH = Path(
     os.environ.get("RUNTIME_MENTIONS_FILE", DEFAULT_RUNTIME_MENTIONS_PATH)
 ).resolve()
+RUNTIME_PLAYERS_PATH = Path(os.environ.get("RUNTIME_PLAYERS_FILE", DEFAULT_RUNTIME_PLAYERS_PATH)).resolve()
+ONLINE_STATS_ENABLED = os.environ.get("ENABLE_ONLINE_STATS", "").lower() == "true"
 
 app = FastAPI(title="FantasyFootballCalc", version="0.1.0")
 app.add_middleware(
@@ -68,10 +72,20 @@ app.add_middleware(
 )
 
 _source_config = source_config_from_env(dict(os.environ))
+_online_stats_agent = (
+    OnlineNflStatsAgent(
+        output_path=RUNTIME_PLAYERS_PATH,
+        config=config_from_env(dict(os.environ)),
+    )
+    if ONLINE_STATS_ENABLED
+    else None
+)
 _agent_pipeline = InternetAgentPipeline(
-    players_path=PLAYERS_PATH,
+    players_path=RUNTIME_PLAYERS_PATH if ONLINE_STATS_ENABLED else CONFIGURED_PLAYERS_PATH,
     mentions_output_path=RUNTIME_MENTIONS_PATH,
     source_config=_source_config,
+    stats_agent=_online_stats_agent,
+    fallback_players_path=CONFIGURED_PLAYERS_PATH,
 )
 _scheduler = DailyAgentScheduler(
     pipeline=_agent_pipeline,
@@ -111,8 +125,11 @@ def _roster(payload: LeaguePayload) -> RosterContext:
 
 
 def _current_data():
+    players_path = CONFIGURED_PLAYERS_PATH
+    if ONLINE_STATS_ENABLED and RUNTIME_PLAYERS_PATH.exists():
+        players_path = RUNTIME_PLAYERS_PATH
     mentions_path = RUNTIME_MENTIONS_PATH if RUNTIME_MENTIONS_PATH.exists() else MENTIONS_PATH
-    return load_players(PLAYERS_PATH), load_mentions(mentions_path)
+    return load_players(players_path), load_mentions(mentions_path)
 
 
 @app.on_event("startup")
@@ -165,6 +182,7 @@ def agent_status():
     return {
         **_scheduler.status(),
         "daily_enabled": os.environ.get("ENABLE_DAILY_AGENTS", "").lower() == "true",
+        "online_stats_enabled": ONLINE_STATS_ENABLED,
         "manual_run_enabled": os.environ.get("ALLOW_AGENT_MANUAL_RUN", "true").lower() == "true",
         "sources_configured": bool(_source_config.rss_feeds or _source_config.article_urls),
         "rss_feeds": len(_source_config.rss_feeds),
@@ -187,8 +205,11 @@ def health():
         "root": str(ROOT),
         "web_dir_exists": WEB_DIR.exists(),
         "data_dir_exists": DATA_DIR.exists(),
-        "players_file": str(PLAYERS_PATH),
-        "players_file_exists": PLAYERS_PATH.exists(),
+        "online_stats_enabled": ONLINE_STATS_ENABLED,
+        "configured_players_file": str(CONFIGURED_PLAYERS_PATH),
+        "configured_players_file_exists": CONFIGURED_PLAYERS_PATH.exists(),
+        "runtime_players_file": str(RUNTIME_PLAYERS_PATH),
+        "runtime_players_file_exists": RUNTIME_PLAYERS_PATH.exists(),
         "mentions_file": str(MENTIONS_PATH),
         "mentions_file_exists": MENTIONS_PATH.exists(),
         "runtime_mentions_file": str(RUNTIME_MENTIONS_PATH),

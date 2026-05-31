@@ -194,6 +194,7 @@ async function loadAgentStatus() {
   elements.agentMetrics.innerHTML = `
     ${metric("Feeds", status.rss_feeds)}
     ${metric("URLs", status.article_urls)}
+    ${metric("Stats", lastRun?.stats_status || (status.online_stats_enabled ? "On" : "Off"))}
     ${metric("Sources", status.sources_configured ? "Ready" : "Sample")}
     ${metric("Last", lastRun ? lastRun.status : "None")}
   `;

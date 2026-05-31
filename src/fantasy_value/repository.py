@@ -14,6 +14,13 @@ def load_players(path: str | Path) -> list[PlayerStats]:
     return [PlayerStats(**item) for item in raw]
 
 
+def save_players(path: str | Path, players: list[PlayerStats]) -> None:
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8") as handle:
+        json.dump([asdict(player) for player in players], handle, indent=2)
+
+
 def load_mentions(path: str | Path) -> list[ExpertMention]:
     raw = _load_json(path)
     mentions: list[ExpertMention] = []

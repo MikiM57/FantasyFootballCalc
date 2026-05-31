@@ -48,6 +48,34 @@ Use only approved feeds, public APIs, licensed data, RSS metadata, or sources yo
 
 ## Adding Real Data On Render
 
+The site can now populate player data automatically from public online football data.
+
+For automatic player data, set:
+
+```text
+STATS_PROVIDER=online
+ENABLE_ONLINE_STATS=true
+RUN_AGENTS_ON_START=true
+ENABLE_DAILY_AGENTS=true
+```
+
+The daily agent will:
+
+- fetch NFL player metadata from Sleeper
+- fetch weekly player stats from nflverse
+- generate `data/runtime/latest_players.json`
+- use that generated player file for rankings and trades
+
+You can control the season and player count:
+
+```text
+NFLVERSE_SEASON=2025
+NFLVERSE_FALLBACK_SEASONS=2
+ONLINE_PLAYER_LIMIT=250
+```
+
+If `NFLVERSE_SEASON` is blank, the app tries the current year first and falls back to recent years. This is useful in the offseason before current-season weekly stats exist.
+
 Render's **Environment** page lets you add both environment variables and secret files. Secret files are available at runtime under `/etc/secrets/<filename>`.
 
 For real player data:
@@ -68,7 +96,7 @@ mentions.json
 
 Then choose **Save, rebuild, and deploy**.
 
-The app automatically uses `/etc/secrets/players.json` and `/etc/secrets/mentions.json` when those files exist. The player file must be a JSON array using the same shape as `data/sample_players.json`. Secret files are best for small data files; for a full production player database, use a database or commit a public non-secret data file into `data/`.
+The app automatically uses `/etc/secrets/players.json` and `/etc/secrets/mentions.json` when those files exist. The player file must be a JSON array using the same shape as `data/sample_players.json`. Secret files are best for small data files; for a full production player database, use the automatic online provider, a database, or commit a public non-secret data file into `data/`.
 
 ## Quick Start
 

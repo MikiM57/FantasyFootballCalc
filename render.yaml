@@ -7,11 +7,17 @@ services:
     startCommand: uvicorn fantasy_value.api:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: STATS_PROVIDER
-        value: sample
-      - key: PLAYERS_FILE
-        value: data/sample_players.json
-      - key: MENTIONS_FILE
-        value: data/sample_mentions.json
+        value: online
+      - key: ENABLE_ONLINE_STATS
+        value: true
+      - key: ONLINE_PLAYER_LIMIT
+        value: 250
+      - key: NFLVERSE_FALLBACK_SEASONS
+        value: 2
+      - key: ENABLE_SCHEDULE_STRENGTH
+        value: true
+      - key: RUNTIME_PLAYERS_FILE
+        value: data/runtime/latest_players.json
       - key: RUNTIME_MENTIONS_FILE
         value: data/runtime/latest_mentions.json
       - key: ENABLE_DAILY_AGENTS

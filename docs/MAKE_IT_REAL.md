@@ -43,6 +43,18 @@ After deployment, the host gives you a public URL. That is the real website link
 
 ## Adding Real Data
 
+Use automatic online stats first:
+
+```text
+STATS_PROVIDER=online
+ENABLE_ONLINE_STATS=true
+RUN_AGENTS_ON_START=true
+ENABLE_DAILY_AGENTS=true
+ONLINE_PLAYER_LIMIT=250
+```
+
+This pulls player metadata from Sleeper and weekly production from nflverse, then writes `data/runtime/latest_players.json`.
+
 For a quick prototype on Render, use secret files:
 
 ```text
