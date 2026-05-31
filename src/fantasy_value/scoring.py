@@ -22,6 +22,13 @@ class PlayerValuation:
     sentiment_score: float
     market_score: float
     risk_penalty: float
+    strength_of_schedule: float
+    projected_points: float
+    average_points: float
+    rest_of_season_points: float
+    expert_favorability: float
+    trend_score: float
+    mentions_count: int
     explanation: list[str]
 
 
@@ -62,6 +69,7 @@ class ValuationEngine:
         environment = self._environment_score(player)
         sentiment = self._sentiment_score(mentions)
         market = self._market_score(player)
+        schedule = self._schedule_score(player)
         age = self._age_score(player, league)
         scarcity = self._scarcity_multiplier(player, league)
         risk = self._risk_penalty(player)
@@ -74,6 +82,7 @@ class ValuationEngine:
             + environment * weights["environment"]
             + sentiment * weights["sentiment"]
             + market * weights["market"]
+            + schedule * weights["schedule"]
             + age * weights["age"]
             - risk * weights["risk"]
         )
@@ -85,6 +94,7 @@ class ValuationEngine:
             production=production,
             opportunity=opportunity,
             sentiment=sentiment,
+            schedule=schedule,
             risk=risk,
             roster=roster,
         )
@@ -104,6 +114,13 @@ class ValuationEngine:
             sentiment_score=round(sentiment, 2),
             market_score=round(market, 2),
             risk_penalty=round(risk, 2),
+            strength_of_schedule=round(schedule, 2),
+            projected_points=round(player.projected_points, 2),
+            average_points=round(player.fantasy_points_per_game, 2),
+            rest_of_season_points=round(player.rest_of_season_projected_points, 2),
+            expert_favorability=round(sentiment, 2),
+            trend_score=round(player.trend_score, 2),
+            mentions_count=len(mentions),
             explanation=explanation,
         )
 
@@ -172,6 +189,9 @@ class ValuationEngine:
             return self._clip(100 - player.average_draft_position / 3)
         return 50.0
 
+    def _schedule_score(self, player: PlayerStats) -> float:
+        return self._clip(player.rest_of_season_strength_of_schedule)
+
     def _age_score(self, player: PlayerStats, league: LeagueSettings) -> float:
         if not league.dynasty:
             return 50.0
@@ -193,6 +213,7 @@ class ValuationEngine:
             "environment": 0.10,
             "sentiment": 0.10,
             "market": 0.12,
+            "schedule": 0.05,
             "age": 0.09,
             "risk": 0.12,
         }
@@ -201,9 +222,11 @@ class ValuationEngine:
             weights["market"] += 0.03
             weights["production"] -= 0.05
             weights["environment"] -= 0.04
+            weights["schedule"] -= 0.01
         else:
             weights["production"] += 0.07
             weights["opportunity"] += 0.04
+            weights["schedule"] += 0.03
             weights["age"] -= 0.06
             weights["market"] -= 0.03
         return weights
@@ -246,6 +269,7 @@ class ValuationEngine:
         production: float,
         opportunity: float,
         sentiment: float,
+        schedule: float,
         risk: float,
         roster: RosterContext,
     ) -> list[str]:
@@ -258,6 +282,10 @@ class ValuationEngine:
             reasons.append("Expert/article sentiment is positive.")
         if sentiment <= 40:
             reasons.append("Expert/article sentiment is cautious.")
+        if schedule >= 65:
+            reasons.append("Rest-of-season schedule grades as favorable.")
+        if schedule <= 40:
+            reasons.append("Rest-of-season schedule is a headwind.")
         if risk >= 55:
             reasons.append("Injury or role uncertainty is a meaningful drag.")
         need = roster.need_for(player.position)

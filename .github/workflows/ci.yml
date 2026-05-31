@@ -26,6 +26,8 @@ jobs:
         run: python -m fantasy_value.cli rank --players data/sample_players.json --mentions data/sample_mentions.json
       - name: CLI trade smoke test
         run: python -m fantasy_value.cli trade --players data/sample_players.json --mentions data/sample_mentions.json --give derrick-henry --get drake-london
+      - name: Agent pipeline smoke test
+        run: python -m fantasy_value.cli agents --players data/sample_players.json --output data/runtime/latest_mentions.json
       - name: Start API and run web smoke test
         run: |
           uvicorn fantasy_value.api:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &

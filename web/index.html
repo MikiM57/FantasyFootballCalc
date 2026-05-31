@@ -8,73 +8,121 @@
   </head>
   <body>
     <header class="topbar">
-      <div>
-        <h1>FantasyFootballCalc</h1>
-        <p>Dynasty, redraft, and trade value calculator.</p>
+      <div class="brand">
+        <div class="mark">FFC</div>
+        <div>
+          <h1>FantasyFootballCalc</h1>
+          <p>Trade value, rankings, schedule, usage, and expert favorability.</p>
+        </div>
       </div>
-      <button id="refreshButton" type="button">Refresh Rankings</button>
+      <div class="top-actions">
+        <span id="status">Loading</span>
+        <button id="refreshButton" type="button">Refresh</button>
+      </div>
     </header>
 
-    <main class="layout">
-      <section class="panel controls" aria-label="League controls">
-        <h2>League</h2>
-        <label>
-          Scoring
-          <select id="scoring">
-            <option value="half_ppr">Half PPR</option>
-            <option value="ppr">PPR</option>
-            <option value="standard">Standard</option>
-          </select>
-        </label>
-        <label class="checkline">
-          <input id="dynasty" type="checkbox" checked />
-          Dynasty
-        </label>
-        <label class="checkline">
-          <input id="superflex" type="checkbox" />
-          Superflex
-        </label>
-        <label>
-          TE premium
-          <input id="tePremium" type="number" min="0" max="2" step="0.25" value="0" />
-        </label>
-        <label>
-          Team direction
-          <select id="window">
-            <option value="balanced">Balanced</option>
-            <option value="contender">Contender</option>
-            <option value="rebuilder">Rebuilder</option>
-          </select>
-        </label>
-        <div class="needs">
-          <span>Needs</span>
-          <label>QB <input data-need="QB" type="range" min="-1" max="1" step="0.25" value="0" /></label>
-          <label>RB <input data-need="RB" type="range" min="-1" max="1" step="0.25" value="0" /></label>
-          <label>WR <input data-need="WR" type="range" min="-1" max="1" step="0.25" value="0" /></label>
-          <label>TE <input data-need="TE" type="range" min="-1" max="1" step="0.25" value="0" /></label>
+    <main class="page">
+      <section class="trade-board" aria-label="Trade calculator">
+        <div class="trade-side">
+          <div class="section-title">
+            <h2>Give</h2>
+            <span>5 slots</span>
+          </div>
+          <div id="giveSlots" class="trade-slots"></div>
+          <div id="giveSummary" class="package-summary"></div>
+        </div>
+
+        <div class="result-panel">
+          <div class="verdict-shell">
+            <span>Verdict</span>
+            <strong id="tradeVerdict">Select players</strong>
+          </div>
+          <div class="scoreline">
+            <div>
+              <span>Give</span>
+              <strong id="giveValue">0.0</strong>
+            </div>
+            <div>
+              <span>Net</span>
+              <strong id="netValue">0.0</strong>
+            </div>
+            <div>
+              <span>Receive</span>
+              <strong id="receiveValue">0.0</strong>
+            </div>
+          </div>
+          <div id="tradeNotes" class="trade-notes"></div>
+          <button id="tradeButton" type="button">Evaluate Trade</button>
+        </div>
+
+        <div class="trade-side">
+          <div class="section-title">
+            <h2>Receive</h2>
+            <span>5 slots</span>
+          </div>
+          <div id="receiveSlots" class="trade-slots"></div>
+          <div id="receiveSummary" class="package-summary"></div>
         </div>
       </section>
 
-      <section class="rankings" aria-label="Player rankings">
-        <div class="section-title">
-          <h2>Rankings</h2>
-          <span id="status">Loading</span>
-        </div>
-        <div id="rankings"></div>
-      </section>
+      <section class="dashboard-grid">
+        <section class="panel controls" aria-label="League controls">
+          <h2>League</h2>
+          <label>
+            Scoring
+            <select id="scoring">
+              <option value="half_ppr">Half PPR</option>
+              <option value="ppr">PPR</option>
+              <option value="standard">Standard</option>
+            </select>
+          </label>
+          <div class="toggle-row">
+            <label class="checkline">
+              <input id="dynasty" type="checkbox" checked />
+              Dynasty
+            </label>
+            <label class="checkline">
+              <input id="superflex" type="checkbox" />
+              Superflex
+            </label>
+          </div>
+          <label>
+            TE premium
+            <input id="tePremium" type="number" min="0" max="2" step="0.25" value="0" />
+          </label>
+          <label>
+            Team direction
+            <select id="window">
+              <option value="balanced">Balanced</option>
+              <option value="contender">Contender</option>
+              <option value="rebuilder">Rebuilder</option>
+            </select>
+          </label>
+          <div class="needs">
+            <span>Position Need</span>
+            <label>QB <input data-need="QB" type="range" min="-1" max="1" step="0.25" value="0" /></label>
+            <label>RB <input data-need="RB" type="range" min="-1" max="1" step="0.25" value="0" /></label>
+            <label>WR <input data-need="WR" type="range" min="-1" max="1" step="0.25" value="0" /></label>
+            <label>TE <input data-need="TE" type="range" min="-1" max="1" step="0.25" value="0" /></label>
+          </div>
+        </section>
 
-      <section class="panel trade" aria-label="Trade analyzer">
-        <h2>Trade Analyzer</h2>
-        <label>
-          Give
-          <select id="giveSelect" multiple size="5"></select>
-        </label>
-        <label>
-          Receive
-          <select id="receiveSelect" multiple size="5"></select>
-        </label>
-        <button id="tradeButton" type="button">Analyze Trade</button>
-        <div id="tradeResult" class="trade-result"></div>
+        <section class="rankings" aria-label="Player rankings">
+          <div class="section-title">
+            <h2>Rankings</h2>
+            <span id="rankingCount">0 players</span>
+          </div>
+          <div id="rankings"></div>
+        </section>
+
+        <section class="panel agent-panel" aria-label="Agent status">
+          <div class="section-title">
+            <h2>Daily Agents</h2>
+            <span id="agentState">Idle</span>
+          </div>
+          <div id="agentMetrics" class="agent-metrics"></div>
+          <button id="agentRunButton" type="button">Run Agents</button>
+        </section>
       </section>
     </main>
 

@@ -22,7 +22,11 @@
     "injury_risk": 0.12,
     "role_uncertainty": 0.06,
     "market_value": 96.0,
-    "average_draft_position": 3.5
+    "average_draft_position": 3.5,
+    "rest_of_season_strength_of_schedule": 61.0,
+    "remaining_games": 17,
+    "trend_score": 88.0,
+    "bye_week": 10
   },
   {
     "player_id": "bijan-robinson",
@@ -47,7 +51,11 @@
     "injury_risk": 0.16,
     "role_uncertainty": 0.08,
     "market_value": 94.0,
-    "average_draft_position": 5.0
+    "average_draft_position": 5.0,
+    "rest_of_season_strength_of_schedule": 67.0,
+    "remaining_games": 17,
+    "trend_score": 84.0,
+    "bye_week": 5
   },
   {
     "player_id": "josh-allen",
@@ -72,7 +80,11 @@
     "injury_risk": 0.13,
     "role_uncertainty": 0.03,
     "market_value": 92.0,
-    "average_draft_position": 20.0
+    "average_draft_position": 20.0,
+    "rest_of_season_strength_of_schedule": 56.0,
+    "remaining_games": 17,
+    "trend_score": 78.0,
+    "bye_week": 7
   },
   {
     "player_id": "sam-laporta",
@@ -97,7 +109,11 @@
     "injury_risk": 0.17,
     "role_uncertainty": 0.09,
     "market_value": 83.0,
-    "average_draft_position": 28.0
+    "average_draft_position": 28.0,
+    "rest_of_season_strength_of_schedule": 59.0,
+    "remaining_games": 17,
+    "trend_score": 73.0,
+    "bye_week": 8
   },
   {
     "player_id": "derrick-henry",
@@ -122,7 +138,11 @@
     "injury_risk": 0.26,
     "role_uncertainty": 0.18,
     "market_value": 62.0,
-    "average_draft_position": 36.0
+    "average_draft_position": 36.0,
+    "rest_of_season_strength_of_schedule": 48.0,
+    "remaining_games": 17,
+    "trend_score": 42.0,
+    "bye_week": 7
   },
   {
     "player_id": "drake-london",
@@ -147,6 +167,10 @@
     "injury_risk": 0.14,
     "role_uncertainty": 0.11,
     "market_value": 82.0,
-    "average_draft_position": 24.0
+    "average_draft_position": 24.0,
+    "rest_of_season_strength_of_schedule": 64.0,
+    "remaining_games": 17,
+    "trend_score": 79.0,
+    "bye_week": 5
   }
 ]

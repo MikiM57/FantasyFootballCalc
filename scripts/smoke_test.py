@@ -54,6 +54,11 @@ def main() -> None:
         "decline",
     }
     assert "net_for_a" in trade
+    assert "side_a_summary" in trade
+    assert "expert_favorability" in trade["side_b_summary"]
+
+    agent_status = get_json(f"{base_url}/api/agent/status")
+    assert "daily_enabled" in agent_status
 
     html = get_text(f"{base_url}/")
     assert "FantasyFootballCalc" in html

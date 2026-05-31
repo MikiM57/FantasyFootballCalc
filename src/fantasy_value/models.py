@@ -34,10 +34,18 @@ class PlayerStats:
     role_uncertainty: float
     market_value: float
     average_draft_position: float | None = None
+    rest_of_season_strength_of_schedule: float = 50.0
+    remaining_games: int = 17
+    trend_score: float = 50.0
+    bye_week: int | None = None
 
     @property
     def high_value_touch_rate(self) -> float:
         return self.targets_per_game + self.red_zone_touches_per_game
+
+    @property
+    def rest_of_season_projected_points(self) -> float:
+        return round(self.fantasy_points_per_game * self.remaining_games, 2)
 
 
 @dataclass(frozen=True)

@@ -16,6 +16,8 @@ The goal is to improve on simple trade calculators by separating:
 - A dependency-light Python valuation engine in `src/fantasy_value`
 - Agent-style ingestion modules for stats and expert sentiment
 - A trade analyzer that accounts for roster needs and league format
+- Trade packages with up to 5 players on each side
+- Player metrics for value, average points, projected points, schedule, trend, risk, and expert favorability
 - A FastAPI app with static web UI
 - Sample player and article-sentiment data
 - Unit tests for the core scoring behavior
@@ -27,6 +29,22 @@ The goal is to improve on simple trade calculators by separating:
 When the GitHub Actions `CI` workflow is green, the app has been tested. It means GitHub successfully installed the project, ran the unit tests, ran the command-line rankings/trade checks, started the web server, called the API, and confirmed the web UI loads.
 
 That is not the same as hosting the site. GitHub Actions runs the program temporarily and then shuts it down. To actually use it in a browser, run it locally, open it in Codespaces, or deploy it to a hosting service.
+
+## AI Agents
+
+The repo now has a daily agent pipeline. When live, set these environment variables on your host:
+
+```text
+ENABLE_DAILY_AGENTS=true
+RUN_AGENTS_ON_START=true
+ARTICLE_FEEDS=https://example.com/fantasy-football/rss
+ARTICLE_URLS=
+ALLOW_ARTICLE_BODY_FETCH=false
+```
+
+The agents run once per day by default. They read configured RSS feeds or article URLs, extract player mentions, score expert favorability, and save the latest generated sentiment to `data/runtime/latest_mentions.json`.
+
+Use only approved feeds, public APIs, licensed data, RSS metadata, or sources you are allowed to access. The app is built to support internet ingestion, but it should not blindly scrape sites that prohibit automated access.
 
 ## Quick Start
 
@@ -99,6 +117,7 @@ If you only want to test the core engine without installing API dependencies:
 ```powershell
 python -m unittest discover -s tests
 python -m fantasy_value.cli rank --players data/sample_players.json --mentions data/sample_mentions.json
+python -m fantasy_value.cli agents --players data/sample_players.json --output data/runtime/latest_mentions.json
 ```
 
 ## Repo Layout
@@ -123,6 +142,7 @@ python -m fantasy_value.cli rank --players data/sample_players.json --mentions d
 |   `-- smoke_test.py
 |-- tests/
 |-- web/
+|-- docs/
 |-- Dockerfile
 |-- docker-compose.yml
 |-- render.yaml

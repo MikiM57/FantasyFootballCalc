@@ -8,5 +8,11 @@ services:
     envVars:
       - key: STATS_PROVIDER
         value: sample
+      - key: ENABLE_DAILY_AGENTS
+        value: true
+      - key: RUN_AGENTS_ON_START
+        value: true
+      - key: ALLOW_AGENT_MANUAL_RUN
+        value: true
       - key: PYTHON_VERSION
         value: 3.11.9

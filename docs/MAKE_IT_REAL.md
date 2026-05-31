@@ -6,7 +6,9 @@ The current app is a working prototype:
 
 - Rankings page
 - League setting controls
-- Trade analyzer
+- Trade analyzer with up to 5 players per side
+- Package metrics for average points, projected rest-of-season points, schedule, expert favorability, and risk
+- Daily agent scheduler hooks
 - Sample player data
 - Sample expert sentiment data
 - Scoring engine
@@ -45,9 +47,9 @@ The next product milestones are:
 
 1. Replace sample data with real provider data.
 2. Store daily value snapshots in a database.
-3. Add pages for player rankings, player profiles, trade calculator, and value history.
+3. Add pages for player profiles and value history.
 4. Add league import from Sleeper first because it has a friendly public API.
-5. Add expert sentiment ingestion from allowed RSS feeds and licensed/public article sources.
+5. Configure expert sentiment ingestion from allowed RSS feeds and licensed/public article sources.
 6. Add user accounts and saved leagues.
 7. Add market values from real trades if you have a lawful source for that data.
 

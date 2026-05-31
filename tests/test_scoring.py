@@ -80,3 +80,24 @@ def test_trade_analyzer_returns_verdict():
 
     assert result.verdict in {"accept", "lean_accept", "fair", "lean_decline", "decline"}
     assert result.net_for_a > 0
+    assert result.side_b_summary.expert_favorability > 0
+
+
+def test_trade_analyzer_supports_five_player_packages():
+    players = load_players("data/sample_players.json")
+    mentions = load_mentions("data/sample_mentions.json")
+
+    result = TradeAnalyzer().analyze(
+        players,
+        mentions,
+        TradeSide("give", ("derrick-henry",)),
+        TradeSide(
+            "receive",
+            ("drake-london", "bijan-robinson", "jamarr-chase", "josh-allen", "sam-laporta"),
+        ),
+        LeagueSettings(dynasty=True, superflex=True),
+        RosterContext(competitive_window="balanced"),
+    )
+
+    assert result.side_b_summary.player_count == 5
+    assert result.side_b_summary.rest_of_season_points > result.side_a_summary.rest_of_season_points
