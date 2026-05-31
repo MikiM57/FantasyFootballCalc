@@ -10,6 +10,7 @@ The goal is to improve on simple trade calculators by separating:
 - dynasty value
 - roster utility
 - trade context
+- positional replacement value
 
 ## What is included
 
@@ -235,6 +236,8 @@ base value =
 ```
 
 League settings modify the weights. Dynasty leagues emphasize age and future value. Superflex boosts quarterbacks. TE premium boosts tight ends with strong target roles. Roster context then shifts values based on team need and competitive window.
+
+One-QB leagues discount quarterbacks because replacement options are easier to find. Superflex leagues boost quarterbacks because extra QB starters are scarce. The rankings UI also groups players by position so a QB spike week does not visually crowd out elite WR/RB/TE comparisons.
 
 This is meant to be a strong baseline before adding a trained model.
 

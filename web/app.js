@@ -3,10 +3,12 @@ const state = {
   playerById: new Map(),
   rankings: [],
   lastTrade: null,
+  activePosition: "ALL",
 };
 
 const elements = {
   rankings: document.querySelector("#rankings"),
+  positionTabs: document.querySelector("#positionTabs"),
   status: document.querySelector("#status"),
   rankingCount: document.querySelector("#rankingCount"),
   scoring: document.querySelector("#scoring"),
@@ -95,12 +97,34 @@ async function loadRankings() {
   state.rankings = await postJson("/api/rankings", leaguePayload());
   renderRankings();
   elements.status.textContent = "Ready";
-  elements.rankingCount.textContent = `${state.rankings.length} players`;
 }
 
 function renderRankings() {
   elements.rankings.innerHTML = "";
-  state.rankings.forEach((player, index) => {
+  const positions = state.activePosition === "ALL" ? ["QB", "RB", "WR", "TE"] : [state.activePosition];
+  let shown = 0;
+  positions.forEach((position) => {
+    const players = state.rankings.filter((player) => player.position === position);
+    if (!players.length) {
+      return;
+    }
+    elements.rankings.append(positionHeader(position, players.length));
+    players.forEach((player, index) => {
+      elements.rankings.append(playerRow(player, index));
+      shown += 1;
+    });
+  });
+  elements.rankingCount.textContent = `${shown} players`;
+}
+
+function positionHeader(position, count) {
+  const header = document.createElement("div");
+  header.className = "position-header";
+  header.innerHTML = `<strong>${position}</strong><span>${count} ranked</span>`;
+  return header;
+}
+
+function playerRow(player, index) {
     const row = document.createElement("article");
     row.className = "player-row";
     row.innerHTML = `
@@ -111,6 +135,7 @@ function renderRankings() {
           <span class="badge">${player.position}</span>
           <span class="team">${player.team}</span>
         </div>
+        <div class="value-bar" aria-hidden="true"><span style="width: ${barWidth(player.value)}%"></span></div>
         <div class="explain">${player.explanation[0]}</div>
       </div>
       ${metric("Value", player.value)}
@@ -119,8 +144,11 @@ function renderRankings() {
       ${metric("Sched", player.strength_of_schedule)}
       ${metric("Expert", player.expert_favorability)}
     `;
-    elements.rankings.append(row);
-  });
+    return row;
+}
+
+function barWidth(value) {
+  return Math.max(4, Math.min(100, Number(value) || 0));
 }
 
 function selectedValues(side) {
@@ -216,6 +244,17 @@ async function refreshAll() {
 }
 
 document.querySelector("#refreshButton").addEventListener("click", refreshAll);
+elements.positionTabs.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-position]");
+  if (!button) {
+    return;
+  }
+  state.activePosition = button.dataset.position;
+  elements.positionTabs.querySelectorAll("button").forEach((item) => {
+    item.classList.toggle("active", item === button);
+  });
+  renderRankings();
+});
 document.querySelectorAll(".controls input, .controls select").forEach((field) => {
   field.addEventListener("change", refreshAll);
 });

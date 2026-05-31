@@ -21,6 +21,18 @@ def test_superflex_boosts_elite_quarterback_value():
     assert superflex["josh-allen"].value > standard["josh-allen"].value
 
 
+def test_one_qb_discount_keeps_elite_wr_above_elite_qb():
+    players = load_players("data/sample_players.json")
+    mentions = load_mentions("data/sample_mentions.json")
+
+    standard = {
+        value.player_id: value
+        for value in ValuationEngine().rank_players(players, mentions, LeagueSettings(superflex=False))
+    }
+
+    assert standard["jamarr-chase"].value > standard["josh-allen"].value
+
+
 def test_roster_need_changes_player_value():
     players = load_players("data/sample_players.json")
     mentions = load_mentions("data/sample_mentions.json")

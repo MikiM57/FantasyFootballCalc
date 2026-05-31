@@ -153,9 +153,27 @@ label {
 .trade-slots,
 .controls,
 .agent-panel,
-.trade-notes {
+.trade-notes,
+.position-tabs {
   display: grid;
   gap: 12px;
+}
+
+.position-tabs {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-bottom: 10px;
+}
+
+.position-tabs button {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  background: #fbfcfd;
+  color: var(--muted);
+}
+
+.position-tabs button.active {
+  background: var(--ink);
+  color: white;
 }
 
 .slot,
@@ -332,6 +350,29 @@ input[type="range"] {
   padding: 16px;
 }
 
+.position-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  margin-top: 10px;
+  padding: 0 2px;
+  border-bottom: 2px solid var(--line);
+}
+
+.position-header:first-child {
+  margin-top: 0;
+}
+
+.position-header strong {
+  font-size: 1rem;
+}
+
+.position-header span {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
 .player-row {
   display: grid;
   grid-template-columns: 42px minmax(190px, 1fr) repeat(5, minmax(72px, 88px));
@@ -392,6 +433,21 @@ input[type="range"] {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.88rem;
+}
+
+.value-bar {
+  height: 7px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7ebef;
+}
+
+.value-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
 }
 
 @media (max-width: 1180px) {

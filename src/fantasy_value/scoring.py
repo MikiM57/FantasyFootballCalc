@@ -91,6 +91,7 @@ class ValuationEngine:
         roster_adjusted = standalone + self._context_adjustment(player, roster, league)
         explanation = self._explain(
             player=player,
+            league=league,
             production=production,
             opportunity=opportunity,
             sentiment=sentiment,
@@ -136,10 +137,18 @@ class ValuationEngine:
         return max(low, min(high, value))
 
     def _production_score(self, player: PlayerStats) -> float:
-        projected = player.projected_points / 3.2
-        per_game = player.fantasy_points_per_game * 4.0
+        baseline = {"QB": 14.0, "RB": 7.5, "WR": 8.0, "TE": 5.5}.get(player.position, 7.0)
+        elite = {"QB": 24.0, "RB": 20.0, "WR": 21.0, "TE": 16.0}.get(player.position, 18.0)
+        ppg_score = (player.fantasy_points_per_game - baseline) / max(1.0, elite - baseline) * 100
+        projected_baseline = baseline * max(1, player.remaining_games)
+        projected_elite = elite * max(1, player.remaining_games)
+        projected = (
+            (player.rest_of_season_projected_points - projected_baseline)
+            / max(1.0, projected_elite - projected_baseline)
+            * 100
+        )
         durability = min(100.0, player.games_played / 17 * 100)
-        return self._clip(projected * 0.45 + per_game * 0.45 + durability * 0.10)
+        return self._clip(projected * 0.40 + ppg_score * 0.50 + durability * 0.10)
 
     def _opportunity_score(self, player: PlayerStats) -> float:
         route_role = player.route_participation * 100
@@ -233,8 +242,10 @@ class ValuationEngine:
 
     @staticmethod
     def _scarcity_multiplier(player: PlayerStats, league: LeagueSettings) -> float:
-        if player.position == "QB" and league.superflex:
-            return 1.18
+        if player.position == "QB":
+            if league.superflex:
+                return 1.22
+            return 0.76 if league.dynasty else 0.82
         if player.position == "TE":
             premium_boost = min(0.16, league.tight_end_premium * 0.12)
             starter_boost = 0.04 if league.starters.get("TE", 1) > 1 else 0.0
@@ -266,6 +277,7 @@ class ValuationEngine:
     @staticmethod
     def _explain(
         player: PlayerStats,
+        league: LeagueSettings,
         production: float,
         opportunity: float,
         sentiment: float,
@@ -288,6 +300,10 @@ class ValuationEngine:
             reasons.append("Rest-of-season schedule is a headwind.")
         if risk >= 55:
             reasons.append("Injury or role uncertainty is a meaningful drag.")
+        if player.position == "QB" and not league.superflex:
+            reasons.append("One-QB format discounts QB value because replacement options are deeper.")
+        if player.position == "QB" and league.superflex:
+            reasons.append("Superflex format boosts QB value because extra starters are scarce.")
         need = roster.need_for(player.position)
         if need >= 0.35:
             reasons.append(f"Roster context boosts {player.position} because it is a need.")
